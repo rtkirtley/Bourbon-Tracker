@@ -90,44 +90,60 @@ function save(){ localStorage.setItem("bourbons", JSON.stringify(bourbons)) }
 
 // --- Wikipedia API Image Search ---
 async function fetchBourbonImage(name){
-    const url = `https://en.wikipedia.org/w/api.php?action=query&format=json&origin=*&prop=pageimages&piprop=original&titles=${encodeURIComponent(name+' bourbon')}`;
-    const res = await fetch(url);
-    const data = await res.json();
-    const pages = data.query.pages;
-    const key = Object.keys(pages)[0];
-    if(pages[key].original) return pages[key].original.source;
+    try {
+        const url = `https://en.wikipedia.org/w/api.php?action=query&format=json&origin=*&prop=pageimages&piprop=original&titles=${encodeURIComponent(name+' bourbon')}`;
+        const res = await fetch(url);
+        const data = await res.json();
+        const pages = data.query.pages;
+        const key = Object.keys(pages)[0];
+        if(pages[key].original) return pages[key].original.source;
+    } catch(e){ console.log("Wiki API error:", e) }
     return null;
 }
 
 // --- Add Bourbon ---
-async function addBourbon(){
-    let nameVal = name.value.trim();
+async function addBourbon() {
+    const nameEl = document.getElementById("name");
+    const distEl = document.getElementById("distillery");
+    const proofEl = document.getElementById("proof");
+    const scoreEl = document.getElementById("score");
+    const sweetEl = document.getElementById("sweet");
+    const oakEl = document.getElementById("oak");
+    const spiceEl = document.getElementById("spice");
+    const heatEl = document.getElementById("heat");
+    const complexityEl = document.getElementById("complexity");
+    const notesEl = document.getElementById("notes");
+
+    const nameVal = nameEl.value.trim();
     if(!nameVal){ alert("Enter bourbon name"); return; }
-    let distVal = distillery.value.trim();
+    let distVal = distEl.value.trim();
     if(!distVal) distVal = nameVal; // fallback
 
-    let imgUrl = await fetchBourbonImage(nameVal);
+    const imgUrl = await fetchBourbonImage(nameVal);
 
     const b = {
         name: nameVal,
         distillery: distVal,
-        proof:proof.value,
-        score:Number(score.value),
-        sweet:Number(sweet.value),
-        oak:Number(oak.value),
-        spice:Number(spice.value),
-        heat:Number(heat.value),
-        complexity:Number(complexity.value),
-        notes:notes.value,
+        proof: proofEl.value,
+        score: Number(scoreEl.value),
+        sweet: Number(sweetEl.value),
+        oak: Number(oakEl.value),
+        spice: Number(spiceEl.value),
+        heat: Number(heatEl.value),
+        complexity: Number(complexityEl.value),
+        notes: notesEl.value,
         img: imgUrl
     };
+
     bourbons.push(b);
     bourbons.sort((a,b)=>b.score-a.score);
     save();
     renderCollection(); renderLeaderboard(); updateRadar();
-    document.querySelectorAll("input,textarea").forEach(el=>el.value="");
-    sweet.value=oak.value=spice.value=heat.value=complexity.value=3;
-    sweetVal.innerText=oakVal.innerText=spiceVal.innerText=heatVal.innerText=complexityVal.innerText=3;
+
+    // Reset inputs
+    [nameEl, distEl, proofEl, scoreEl, notesEl].forEach(i=>i.value="");
+    [sweetEl, oakEl, spiceEl, heatEl, complexityEl].forEach(i=>i.value=3);
+    ["sweetVal","oakVal","spiceVal","heatVal","complexityVal"].forEach(id=>document.getElementById(id).innerText=3);
 }
 
 // --- Delete ---
