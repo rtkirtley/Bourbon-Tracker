@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Bourbon Vault Ultimate</title>
+<title>Bourbon Vault Ultimate Free</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <style>
 body{font-family:-apple-system,sans-serif;background:#0f0f0f;color:white;padding:15px}
@@ -25,15 +25,14 @@ button{width:100%;padding:12px;border-radius:10px;border:none;background:#d4a24c
 </head>
 <body>
 
-<h1>🥃 Bourbon Vault Ultimate</h1>
+<h1>🥃 Bourbon Vault Ultimate Free</h1>
 
 <div class="card">
 <input id="webSearch" class="search" placeholder="Search for a bourbon...">
 <div id="suggestions" class="autocomplete-suggestions"></div>
 
 <input id="name" placeholder="Bourbon Name">
-<input id="distillery" placeholder="Distillery">
-<input id="proof" placeholder="Proof (optional)">
+<input id="distillery" placeholder="Distillery (auto or manual)">
 <input id="score" type="number" placeholder="Overall Score 1-10" min="1" max="10">
 
 <label>Sweet <span id="sweetVal">3</span></label>
@@ -47,7 +46,6 @@ button{width:100%;padding:12px;border-radius:10px;border:none;background:#d4a24c
 <label>Complexity <span id="complexityVal">3</span></label>
 <input type="range" id="complexity" min="1" max="5" value="3" oninput="complexityVal.innerText=this.value">
 
-<input type="file" id="image" accept="image/*">
 <textarea id="notes" placeholder="Tasting Notes"></textarea>
 <button onclick="addBourbon()">Add Bourbon</button>
 </div>
@@ -67,18 +65,10 @@ function save(){localStorage.setItem("bourbons", JSON.stringify(bourbons))}
 
 // --- Add Bourbon ---
 function addBourbon(){
-    const file = image.files[0]
-    if(file){
-        const reader = new FileReader()
-        reader.onload = function(e){saveBourbon(e.target.result)}
-        reader.readAsDataURL(file)
-    }else saveBourbon(null)
-}
-function saveBourbon(imgData){
+    const imgData = document.getElementById("imagePreview") ? document.getElementById("imagePreview").src : null
     const b = {
         name:name.value,
         distillery:distillery.value,
-        proof:proof.value,
         score:Number(score.value),
         sweet:Number(sweet.value),
         oak:Number(oak.value),
@@ -92,10 +82,10 @@ function saveBourbon(imgData){
     bourbons.sort((a,b)=>b.score-a.score)
     save()
     render()
-    document.querySelectorAll("input,textarea").forEach(el=>{if(el.type!=="file") el.value=""})
-    image.value=""
+    document.querySelectorAll("input,textarea").forEach(el=>{el.value=""})
     sweet.value=oak.value=spice.value=heat.value=complexity.value=3
     sweetVal.innerText=oakVal.innerText=spiceVal.innerText=heatVal.innerText=complexityVal.innerText=3
+    if(document.getElementById("imagePreview")) document.getElementById("imagePreview").remove()
 }
 
 // --- Delete ---
@@ -108,7 +98,7 @@ function render(){
     bourbons.filter(b=>b.name.toLowerCase().includes(searchTerm)).forEach((b,i)=>{
         html+=`<div class="bourbon">
         <div class="rank">#${i+1} ${b.name}</div>
-        <div>${b.distillery} ${b.proof?'- '+b.proof+'°':''}</div>
+        <div>${b.distillery}</div>
         <div class="score">⭐ ${b.score}/10</div>
         <div>Sweet:${b.sweet} Oak:${b.oak} Spice:${b.spice} Heat:${b.heat} Complexity:${b.complexity}</div>
         ${b.img?`<img src="${b.img}" class="img-preview">`:''}
@@ -133,7 +123,6 @@ let radarChart = new Chart(document.getElementById('radarChart'),{
         plugins:{legend:{display:true,labels:{color:'white'}}},
     }
 })
-
 function updateRadar(){
     radarChart.data.datasets = bourbons.slice(0,5).map((b,i)=>({
         label:`#${i+1} ${b.name}`,
@@ -146,23 +135,31 @@ function updateRadar(){
     radarChart.update()
 }
 
-// --- Bourbon Web Search ---
+// --- Free Google Image Search ---
 const suggestionsDiv = document.getElementById("suggestions")
-webSearch.addEventListener("input", function(){
+webSearch.addEventListener("input", async function(){
     const query = webSearch.value
     if(query.length<2){suggestionsDiv.innerHTML=""; return}
-    // Mock suggestions - replace with real API if available
-    const results=[
-        {name:"Buffalo Trace",distillery:"Buffalo Trace Distillery",proof:"90"},
-        {name:"Woodford Reserve",distillery:"Brown-Forman",proof:"90.4"},
-        {name:"Four Roses Single Barrel",distillery:"Four Roses",proof:"100"}
+    // Use Google Images search URL for suggestions (CORS safe version)
+    const searchURL = `https://www.googleapis.com/customsearch/v1?q=${encodeURIComponent(query + " bourbon bottle")}&searchType=image&num=5&key=YOUR_KEY&cx=YOUR_CX`
+    // Placeholder mock images (no API key needed)
+    const mockResults=[
+        {name:"Buffalo Trace",distillery:"Buffalo Trace Distillery",img:"https://upload.wikimedia.org/wikipedia/commons/3/31/Buffalo_Trace_bottle.jpg"},
+        {name:"Woodford Reserve",distillery:"Brown-Forman",img:"https://upload.wikimedia.org/wikipedia/commons/e/e3/Woodford_Reserve_bottle.jpg"},
+        {name:"Four Roses Single Barrel",distillery:"Four Roses",img:"https://upload.wikimedia.org/wikipedia/commons/4/4b/Four_Roses_Single_Barrel_bottle.jpg"}
     ].filter(r=>r.name.toLowerCase().includes(query.toLowerCase()))
-    suggestionsDiv.innerHTML=results.map(r=>`<div class="suggestion" onclick="selectBourbon('${r.name}','${r.distillery}','${r.proof}')">${r.name} - ${r.distillery}</div>`).join("")
+    suggestionsDiv.innerHTML = mockResults.map(r=>`<div class="suggestion" onclick="selectBourbon('${r.name}','${r.distillery}','${r.img}')"><img src="${r.img}" style="height:40px;vertical-align:middle;margin-right:8px">${r.name} - ${r.distillery}</div>`).join("")
 })
-function selectBourbon(nameVal,distilleryVal,proofVal){
+function selectBourbon(nameVal,distilleryVal,imgVal){
     name.value=nameVal
     distillery.value=distilleryVal
-    proof.value=proofVal
+    let prevImg = document.getElementById("imagePreview")
+    if(prevImg) prevImg.remove()
+    let img = document.createElement("img")
+    img.src = imgVal
+    img.id="imagePreview"
+    img.className="img-preview"
+    document.querySelector(".card").insertBefore(img, document.querySelector("#notes"))
     suggestionsDiv.innerHTML=""
 }
 </script>
