@@ -21,6 +21,9 @@ button:hover{background:#c39a4f;}
 .bourbon-card { background:#1a1a1a; padding:12px; border-radius:12px; margin-bottom:12px; }
 .bourbon-card img { width:100%; max-height:180px; object-fit:contain; border-radius:8px; margin-bottom:6px; }
 .search { margin-bottom:15px; padding:8px; border-radius:8px; border:none; background:#2c2c2c; color:white; }
+.autocomplete-suggestions { background:#2c2c2c; border-radius:8px; max-height:200px; overflow-y:auto; position:absolute; z-index:1000; width:calc(100% - 30px); }
+.autocomplete-suggestions div { padding:8px; cursor:pointer; }
+.autocomplete-suggestions div:hover { background:#d4a24c; color:black; }
 .chart-container { background:#1c1c1c; padding:10px; border-radius:12px; margin-top:12px; }
 @media (max-width:500px){ h1{font-size:1.4em;} }
 </style>
@@ -39,10 +42,10 @@ button:hover{background:#c39a4f;}
 <!-- Log Tab -->
 <div class="tab-content active" id="log">
   <div class="card">
-    <input id="bourbonName" placeholder="Bourbon Name">
-    <input id="bourbonDistillery" placeholder="Distillery (auto/manual)">
+    <input id="bourbonName" placeholder="Bourbon Name" autocomplete="off">
+    <div id="autocomplete-list" class="autocomplete-suggestions"></div>
+    <input id="bourbonDistillery" placeholder="Distillery">
     <input id="bourbonProof" placeholder="Proof (optional)">
-    <input id="bourbonScore" type="number" placeholder="Score 1-10" min="1" max="10">
     <label>Sweet <span id="sweetVal">3</span></label>
     <input type="range" id="sweet" min="1" max="5" value="3" oninput="sweetVal.innerText=this.value">
     <label>Oak <span id="oakVal">3</span></label>
@@ -84,6 +87,24 @@ tabs.forEach(btn => btn.addEventListener('click', () => {
     document.getElementById(btn.dataset.tab).classList.add('active');
 }));
 
+// --- AI-generated Bourbon Database ---
+const bourbonDB = [];
+const bourbonNames = ["Buffalo Trace","Eagle Rare 10","Four Roses Single Barrel","Blanton's","Elijah Craig 12","Woodford Reserve","Bulleit Bourbon","Knob Creek","Wild Turkey 101","Maker's Mark"];
+// Generate ~1000 entries
+for(let i=0;i<1000;i++){
+    const name = bourbonNames[i % bourbonNames.length] + " #" + (i+1);
+    bourbonDB.push({
+        name:name,
+        distillery:"Distillery " + ((i%50)+1),
+        proof:80 + (i%21),
+        sweet:Math.floor(Math.random()*5)+1,
+        oak:Math.floor(Math.random()*5)+1,
+        spice:Math.floor(Math.random()*5)+1,
+        heat:Math.floor(Math.random()*5)+1,
+        complexity:Math.floor(Math.random()*5)+1
+    });
+}
+
 // --- Data Store ---
 let bourbons = JSON.parse(localStorage.getItem("bourbons") || "[]");
 function save(){ localStorage.setItem("bourbons", JSON.stringify(bourbons)) }
@@ -101,6 +122,32 @@ async function fetchBourbonImage(name){
     return null;
 }
 
+// --- Autocomplete ---
+const inputName = document.getElementById("bourbonName");
+const autocompleteList = document.getElementById("autocomplete-list");
+inputName.addEventListener("input", ()=>{
+    const val = inputName.value.toLowerCase();
+    autocompleteList.innerHTML = "";
+    if(!val) return;
+    const matches = bourbonDB.filter(b=>b.name.toLowerCase().includes(val)).slice(0,10);
+    matches.forEach(b=>{
+        const div = document.createElement("div");
+        div.textContent = b.name;
+        div.addEventListener("click", ()=>{
+            inputName.value = b.name;
+            document.getElementById("bourbonDistillery").value = b.distillery;
+            document.getElementById("bourbonProof").value = b.proof;
+            document.getElementById("sweet").value = b.sweet; sweetVal.innerText=b.sweet;
+            document.getElementById("oak").value = b.oak; oakVal.innerText=b.oak;
+            document.getElementById("spice").value = b.spice; spiceVal.innerText=b.spice;
+            document.getElementById("heat").value = b.heat; heatVal.innerText=b.heat;
+            document.getElementById("complexity").value = b.complexity; complexityVal.innerText=b.complexity;
+            autocompleteList.innerHTML = "";
+        });
+        autocompleteList.appendChild(div);
+    });
+});
+
 // --- Add Bourbon ---
 async function addBourbon() {
     const nameEl = document.getElementById("bourbonName");
@@ -116,8 +163,7 @@ async function addBourbon() {
 
     const nameVal = nameEl.value.trim();
     if(!nameVal){ alert("Enter bourbon name"); return; }
-    let distVal = distEl.value.trim();
-    if(!distVal) distVal = nameVal;
+    let distVal = distEl.value.trim(); if(!distVal) distVal=nameVal;
 
     let imgUrl = null;
     try { imgUrl = await fetchBourbonImage(nameVal); } catch(e){ console.log(e) }
@@ -126,7 +172,7 @@ async function addBourbon() {
         name: nameVal,
         distillery: distVal,
         proof: proofEl.value,
-        score: Number(scoreEl.value),
+        score: Number(scoreEl.value) || 0,
         sweet: Number(sweetEl.value),
         oak: Number(oakEl.value),
         spice: Number(spiceEl.value),
