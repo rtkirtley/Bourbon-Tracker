@@ -39,10 +39,10 @@ button:hover{background:#c39a4f;}
 <!-- Log Tab -->
 <div class="tab-content active" id="log">
   <div class="card">
-    <input id="name" placeholder="Bourbon Name">
-    <input id="distillery" placeholder="Distillery (auto/manual)">
-    <input id="proof" placeholder="Proof (optional)">
-    <input id="score" type="number" placeholder="Score 1-10" min="1" max="10">
+    <input id="bourbonName" placeholder="Bourbon Name">
+    <input id="bourbonDistillery" placeholder="Distillery (auto/manual)">
+    <input id="bourbonProof" placeholder="Proof (optional)">
+    <input id="bourbonScore" type="number" placeholder="Score 1-10" min="1" max="10">
     <label>Sweet <span id="sweetVal">3</span></label>
     <input type="range" id="sweet" min="1" max="5" value="3" oninput="sweetVal.innerText=this.value">
     <label>Oak <span id="oakVal">3</span></label>
@@ -53,7 +53,7 @@ button:hover{background:#c39a4f;}
     <input type="range" id="heat" min="1" max="5" value="3" oninput="heatVal.innerText=this.value">
     <label>Complexity <span id="complexityVal">3</span></label>
     <input type="range" id="complexity" min="1" max="5" value="3" oninput="complexityVal.innerText=this.value">
-    <textarea id="notes" placeholder="Tasting Notes"></textarea>
+    <textarea id="bourbonNotes" placeholder="Tasting Notes"></textarea>
     <button onclick="addBourbon()">Add Bourbon</button>
   </div>
 </div>
@@ -103,25 +103,26 @@ async function fetchBourbonImage(name){
 
 // --- Add Bourbon ---
 async function addBourbon() {
-    const nameEl = document.getElementById("name");
-    const distEl = document.getElementById("distillery");
-    const proofEl = document.getElementById("proof");
-    const scoreEl = document.getElementById("score");
+    const nameEl = document.getElementById("bourbonName");
+    const distEl = document.getElementById("bourbonDistillery");
+    const proofEl = document.getElementById("bourbonProof");
+    const scoreEl = document.getElementById("bourbonScore");
     const sweetEl = document.getElementById("sweet");
     const oakEl = document.getElementById("oak");
     const spiceEl = document.getElementById("spice");
     const heatEl = document.getElementById("heat");
     const complexityEl = document.getElementById("complexity");
-    const notesEl = document.getElementById("notes");
+    const notesEl = document.getElementById("bourbonNotes");
 
     const nameVal = nameEl.value.trim();
     if(!nameVal){ alert("Enter bourbon name"); return; }
     let distVal = distEl.value.trim();
-    if(!distVal) distVal = nameVal; // fallback
+    if(!distVal) distVal = nameVal;
 
-    const imgUrl = await fetchBourbonImage(nameVal);
+    let imgUrl = null;
+    try { imgUrl = await fetchBourbonImage(nameVal); } catch(e){ console.log(e) }
 
-    const b = {
+    const bourbon = {
         name: nameVal,
         distillery: distVal,
         proof: proofEl.value,
@@ -135,10 +136,12 @@ async function addBourbon() {
         img: imgUrl
     };
 
-    bourbons.push(b);
-    bourbons.sort((a,b)=>b.score-a.score);
+    bourbons.push(bourbon);
+    bourbons.sort((a,b) => b.score - a.score);
     save();
-    renderCollection(); renderLeaderboard(); updateRadar();
+    renderCollection();
+    renderLeaderboard();
+    updateRadar();
 
     // Reset inputs
     [nameEl, distEl, proofEl, scoreEl, notesEl].forEach(i=>i.value="");
