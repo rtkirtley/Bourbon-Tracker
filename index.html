@@ -46,6 +46,7 @@ button:hover{background:#c39a4f;}
     <div id="autocomplete-list" class="autocomplete-suggestions"></div>
     <input id="bourbonDistillery" placeholder="Distillery">
     <input id="bourbonProof" placeholder="Proof (optional)">
+    <input id="bourbonScore" type="number" placeholder="Score 1-10" min="0" max="10">
     <label>Sweet <span id="sweetVal">3</span></label>
     <input type="range" id="sweet" min="1" max="5" value="3" oninput="sweetVal.innerText=this.value">
     <label>Oak <span id="oakVal">3</span></label>
@@ -87,16 +88,26 @@ tabs.forEach(btn => btn.addEventListener('click', () => {
     document.getElementById(btn.dataset.tab).classList.add('active');
 }));
 
-// --- AI-generated Bourbon Database ---
+// --- AI-generated Bourbon Database (Expanded) ---
+const bourbonNames = [
+  "Buffalo Trace","Eagle Rare 10","Four Roses Single Barrel","Blanton's","Elijah Craig 12",
+  "Woodford Reserve","Bulleit Bourbon","Knob Creek","Wild Turkey 101","Maker's Mark",
+  "Noah's Mill","Parker's Heritage","Michter's","Old Forester","Stagg Jr","Weller Special Reserve",
+  "Henry McKenna 10","Russell's Reserve 10","George T. Stagg","Four Roses Small Batch","Four Roses 100 Proof",
+  "Old Rip Van Winkle 10","Old Rip Van Winkle 12","Van Winkle Special Reserve","Booker's","Colonel E.H. Taylor Small Batch",
+  "Angel's Envy","1792 Ridgemont","Rebel Yell","Prichard's","Jefferson's","High West","Bardstown Bourbon","Belle Meade",
+  "Smooth Ambler","Clyde May's","Whistlepig Rye","Balcones","Woodinville","Kings County","Old Forester 1897","Old Forester Birthday Bourbon",
+  "Rittenhouse Rye","Redemption Rye","Breckenridge Bourbon","Templeton Rye","Garrison Brothers","Corsair","Belle Meade Sherry Cask",
+  "Willett","Orphan Barrel","Stranahan's","Dad's Hat"
+];
 const bourbonDB = [];
-const bourbonNames = ["Buffalo Trace","Eagle Rare 10","Four Roses Single Barrel","Blanton's","Elijah Craig 12","Woodford Reserve","Bulleit Bourbon","Knob Creek","Wild Turkey 101","Maker's Mark"];
-// Generate ~1000 entries
 for(let i=0;i<1000;i++){
     const name = bourbonNames[i % bourbonNames.length] + " #" + (i+1);
     bourbonDB.push({
         name:name,
         distillery:"Distillery " + ((i%50)+1),
         proof:80 + (i%21),
+        score:Math.floor(Math.random()*10)+1,
         sweet:Math.floor(Math.random()*5)+1,
         oak:Math.floor(Math.random()*5)+1,
         spice:Math.floor(Math.random()*5)+1,
@@ -137,6 +148,7 @@ inputName.addEventListener("input", ()=>{
             inputName.value = b.name;
             document.getElementById("bourbonDistillery").value = b.distillery;
             document.getElementById("bourbonProof").value = b.proof;
+            document.getElementById("bourbonScore").value = b.score;
             document.getElementById("sweet").value = b.sweet; sweetVal.innerText=b.sweet;
             document.getElementById("oak").value = b.oak; oakVal.innerText=b.oak;
             document.getElementById("spice").value = b.spice; spiceVal.innerText=b.spice;
@@ -165,6 +177,8 @@ async function addBourbon() {
     if(!nameVal){ alert("Enter bourbon name"); return; }
     let distVal = distEl.value.trim(); if(!distVal) distVal=nameVal;
 
+    const scoreVal = Number(scoreEl.value) || 0;
+
     let imgUrl = null;
     try { imgUrl = await fetchBourbonImage(nameVal); } catch(e){ console.log(e) }
 
@@ -172,7 +186,7 @@ async function addBourbon() {
         name: nameVal,
         distillery: distVal,
         proof: proofEl.value,
-        score: Number(scoreEl.value) || 0,
+        score: scoreVal,
         sweet: Number(sweetEl.value),
         oak: Number(oakEl.value),
         spice: Number(spiceEl.value),
