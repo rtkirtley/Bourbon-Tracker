@@ -3,76 +3,105 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Bourbon Vault</title>
+    <title>Bourbon Vault Pro</title>
     
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/931/931920.png">
     
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        :root { --gold: #d4a24c; --bg: #0f0f0f; --card: #1a1a1a; --text: #e0e0e0; }
-        body { font-family: -apple-system, system-ui; margin: 0; background: var(--bg); color: var(--text); padding-bottom: 60px; }
+        :root { --gold: #d4a24c; --bg: #0d0d0d; --card: #181818; --text: #f0f0f0; --dim: #888; }
+        body { font-family: -apple-system, system-ui; margin: 0; background: var(--bg); color: var(--text); padding-bottom: env(safe-area-inset-bottom); }
         
-        header { padding: 50px 20px 20px; text-align: center; border-bottom: 1px solid #222; }
-        h1 { color: var(--gold); margin: 0; font-size: 1.5em; text-transform: uppercase; letter-spacing: 2px; }
+        header { padding: 60px 20px 20px; text-align: center; background: linear-gradient(180deg, #1a1a1a 0%, var(--bg) 100%); }
+        h1 { color: var(--gold); margin: 0; font-size: 1.4em; text-transform: uppercase; letter-spacing: 3px; font-weight: 900; }
 
-        .tabs { display: flex; sticky: top; background: var(--card); margin: 15px; border-radius: 12px; padding: 4px; }
-        .tabs button { flex: 1; padding: 12px; border: none; background: none; color: #777; font-weight: bold; border-radius: 8px; }
-        .tabs button.active { background: var(--gold); color: black; }
+        .tabs { display: flex; sticky: top; background: var(--card); margin: 15px; border-radius: 14px; padding: 4px; border: 1px solid #222; }
+        .tabs button { flex: 1; padding: 12px; border: none; background: none; color: var(--dim); font-weight: bold; border-radius: 10px; font-size: 0.8em; transition: 0.3s; }
+        .tabs button.active { background: var(--gold); color: black; box-shadow: 0 4px 10px rgba(212, 162, 76, 0.3); }
 
-        .content { padding: 0 15px; display: none; }
+        .content { padding: 0 15px; display: none; animation: fadeIn 0.4s ease; }
         .content.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-        .card { background: var(--card); border-radius: 15px; padding: 20px; margin-bottom: 15px; }
-        input, textarea { width: 100%; padding: 12px; margin: 10px 0; border-radius: 8px; border: 1px solid #333; background: #252525; color: white; font-size: 16px; box-sizing: border-box; }
+        .card { background: var(--card); border-radius: 18px; padding: 20px; margin-bottom: 20px; border: 1px solid #222; }
+        input, textarea, select { width: 100%; padding: 14px; margin: 8px 0; border-radius: 10px; border: 1px solid #333; background: #222; color: white; font-size: 16px; box-sizing: border-box; outline: none; }
+        input:focus { border-color: var(--gold); }
         
-        .suggestion-box { background: #252525; border-radius: 8px; max-height: 150px; overflow-y: auto; display: none; margin-top: -10px; border: 1px solid var(--gold); }
-        .suggestion-item { padding: 12px; border-bottom: 1px solid #333; font-size: 0.9em; }
+        .suggestion-box { background: #222; border-radius: 10px; max-height: 200px; overflow-y: auto; display: none; border: 1px solid var(--gold); position: absolute; width: calc(100% - 70px); z-index: 10; }
+        .suggestion-item { padding: 14px; border-bottom: 1px solid #333; font-size: 0.9em; }
 
-        button.primary { width: 100%; padding: 15px; border-radius: 12px; border: none; background: var(--gold); color: black; font-weight: bold; font-size: 1em; margin-top: 10px; }
+        .btn-primary { width: 100%; padding: 16px; border-radius: 14px; border: none; background: var(--gold); color: black; font-weight: 800; font-size: 1em; margin-top: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.4); }
         
-        .stat-row { display: flex; justify-content: space-between; margin: 10px 0 5px; color: var(--gold); font-size: 0.8em; }
-        input[type=range] { width: 100%; accent-color: var(--gold); }
+        .stat-row { display: flex; justify-content: space-between; margin: 12px 0 4px; color: var(--gold); font-size: 0.85em; font-weight: 600; }
+        input[type=range] { width: 100%; accent-color: var(--gold); height: 6px; }
 
-        .log-item { background: var(--card); padding: 15px; border-radius: 15px; margin-bottom: 15px; border-left: 4px solid var(--gold); }
-        .log-item h3 { margin: 0; color: var(--gold); }
-        .log-item .meta { font-size: 0.8em; opacity: 0.6; margin-bottom: 10px; }
-        .delete-btn { color: #ff5555; background: none; border: none; font-size: 0.8em; margin-top: 10px; padding: 0; }
+        .log-item { background: var(--card); padding: 18px; border-radius: 20px; margin-bottom: 15px; position: relative; border-bottom: 2px solid #222; }
+        .log-item h3 { margin: 0 0 5px 0; color: var(--gold); font-size: 1.2em; }
+        .tag-row { display: flex; gap: 8px; margin-bottom: 10px; flex-wrap: wrap; }
+        .tag { background: #333; padding: 4px 10px; border-radius: 6px; font-size: 0.7em; font-weight: bold; text-transform: uppercase; }
+        .rarity-high { color: #ff4444; border: 1px solid #ff4444; }
+        .rarity-mid { color: #44bbff; border: 1px solid #44bbff; }
+        
+        .proof-bar { height: 4px; width: 100%; background: #333; border-radius: 2px; margin: 10px 0; overflow: hidden; }
+        .proof-fill { height: 100%; background: linear-gradient(90deg, #d4a24c, #ff4444); }
+
+        .wish-star { position: absolute; top: 18px; right: 18px; color: var(--gold); font-size: 1.2em; }
+        .delete-btn { color: #666; background: none; border: none; font-size: 0.75em; margin-top: 15px; text-decoration: underline; padding: 0; }
     </style>
 </head>
 <body>
 
 <header>
-    <h1>Bourbon Vault</h1>
+    <h1>Bourbon Vault Pro</h1>
 </header>
 
 <div class="tabs">
-    <button class="t-btn active" onclick="openTab('log')">Log</button>
-    <button class="t-btn" onclick="openTab('vault')">My Vault</button>
-    <button class="t-btn" onclick="openTab('stats')">Analytics</button>
+    <button class="t-btn active" onclick="openTab('log', this)">Log Bottle</button>
+    <button class="t-btn" onclick="openTab('vault', this)">Collection</button>
+    <button class="t-btn" onclick="openTab('stats', this)">Analytics</button>
 </div>
 
 <div id="log" class="content active">
     <div class="card">
-        <input id="bName" placeholder="Bourbon Name..." oninput="showSuggestions(this.value)">
+        <div style="display:flex; gap:10px; align-items:center; margin-bottom:10px;">
+            <input id="bName" placeholder="Find Bourbon..." oninput="showSuggestions(this.value)" style="margin:0;">
+            <div style="display:flex; flex-direction:column; align-items:center;">
+                <label style="font-size:0.6em; color:var(--gold);">WISHLIST</label>
+                <input type="checkbox" id="bWish" style="width:20px; height:20px; margin:0;">
+            </div>
+        </div>
         <div id="suggestions" class="suggestion-box"></div>
         
-        <input id="bDistillery" placeholder="Distillery">
-        <input id="bProof" placeholder="Proof">
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+            <input id="bDistillery" placeholder="Distillery">
+            <input id="bProof" placeholder="Proof">
+        </div>
+
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+            <input id="bPrice" type="number" placeholder="Price Paid $">
+            <select id="bRarity">
+                <option value="Common">Common</option>
+                <option value="Shelfer">Solid Shelfer</option>
+                <option value="Allocated">Allocated</option>
+                <option value="Unicorn">Unicorn</option>
+            </select>
+        </div>
         
         <div class="stat-row"><span>Sweetness</span><span id="v1">3</span></div>
         <input type="range" id="s1" min="1" max="5" value="3" oninput="v1.innerText=this.value">
         
-        <div class="stat-row"><span>Oak/Wood</span><span id="v2">3</span></div>
+        <div class="stat-row"><span>Oak / Wood</span><span id="v2">3</span></div>
         <input type="range" id="s2" min="1" max="5" value="3" oninput="v2.innerText=this.value">
         
-        <div class="stat-row"><span>Spice/Heat</span><span id="v3">3</span></div>
+        <div class="stat-row"><span>Spice / Heat</span><span id="v3">3</span></div>
         <input type="range" id="s3" min="1" max="5" value="3" oninput="v3.innerText=this.value">
 
-        <input id="bScore" type="number" placeholder="Your Score (1-10)">
+        <input id="bScore" type="number" placeholder="Your Rating (1-10)" max="10">
         <textarea id="bNotes" placeholder="Personal tasting notes..."></textarea>
         
-        <button class="primary" onclick="saveBourbon()">Add to Collection</button>
+        <button class="btn-primary" onclick="saveBourbon()">Add to Vault</button>
     </div>
 </div>
 
@@ -82,37 +111,36 @@
 
 <div id="stats" class="content">
     <div class="card">
-        <h3 style="text-align:center; color:var(--gold)">Palate Overview</h3>
+        <h3 style="text-align:center; color:var(--gold); margin-top:0;">Palate Analysis</h3>
         <canvas id="palateChart"></canvas>
     </div>
+    <div id="summaryStats" style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;"></div>
 </div>
 
 <script>
-// --- AI GENERATED MASTER DATABASE ---
+// --- MASTER AFICIONADO DATABASE ---
 const AI_DATABASE = [
-    { name: "Buffalo Trace", distillery: "Buffalo Trace", proof: 90, sweet: 4, oak: 3, spice: 2, notes: "Vanilla, caramel, and a hint of mint." },
-    { name: "Eagle Rare 10", distillery: "Buffalo Trace", proof: 90, sweet: 3, oak: 4, spice: 3, notes: "Complex herbs, honey, and leather." },
-    { name: "Blanton's Single Barrel", distillery: "Buffalo Trace", proof: 93, sweet: 4, oak: 3, spice: 4, notes: "Creamy vanilla, citrus, and oak." },
-    { name: "Woodford Reserve", distillery: "Woodford Reserve", proof: 90, sweet: 3, oak: 3, spice: 3, notes: "Rich dried fruit and cocoa." },
-    { name: "Wild Turkey 101", distillery: "Wild Turkey", proof: 101, sweet: 2, oak: 3, spice: 5, notes: "Bold spice, pepper, and deep oak." },
-    { name: "Maker's Mark", distillery: "Maker's Mark", proof: 90, sweet: 5, oak: 2, spice: 2, notes: "Wheat-based, very sweet and smooth." },
-    { name: "Knob Creek 9", distillery: "Jim Beam", proof: 100, sweet: 3, oak: 5, spice: 3, notes: "Robust, charred oak and toasted nuts." },
-    { name: "Old Forester 1910", distillery: "Old Forester", proof: 93, sweet: 5, oak: 4, spice: 2, notes: "Double oaked, tastes like toasted marshmallows." },
-    { name: "Elijah Craig Small Batch", distillery: "Heaven Hill", proof: 94, sweet: 3, oak: 4, spice: 3, notes: "Nutty, vanilla, and slight fruit." },
-    { name: "Basil Hayden", distillery: "Jim Beam", proof: 80, sweet: 4, oak: 2, spice: 3, notes: "Light, spicy, and easy to drink." },
-    { name: "Weller Special Reserve", distillery: "Buffalo Trace", proof: 90, sweet: 5, oak: 2, spice: 2, notes: "Butterscotch and soft honey notes." },
-    { name: "Angel's Envy", distillery: "Angel's Envy", proof: 86, sweet: 5, oak: 2, spice: 2, notes: "Finished in Port casks, very fruity." },
-    { name: "Bulleit Bourbon", distillery: "Bulleit", proof: 90, sweet: 2, oak: 3, spice: 4, notes: "High rye content, crisp and spicy." }
+    { name: "Noah's Mill", distillery: "Willett", proof: 114.3, sweet: 3, oak: 4, spice: 5, notes: "Walnut, prune, and heavy spice.", rarity: "Shelfer" },
+    { name: "Rowan's Creek", distillery: "Willett", proof: 100.1, sweet: 4, oak: 3, spice: 3, notes: "Caramel, pear, and herbal mint.", rarity: "Shelfer" },
+    { name: "Weller Antique 107", distillery: "Buffalo Trace", proof: 107, sweet: 5, oak: 3, spice: 3, notes: "Cinnamon, vanilla bean, wheated.", rarity: "Allocated" },
+    { name: "Weller Special Reserve", distillery: "Buffalo Trace", proof: 90, sweet: 5, oak: 2, spice: 2, notes: "Butterscotch and soft honey.", rarity: "Shelfer" },
+    { name: "Stagg (Junior)", distillery: "Buffalo Trace", proof: 130.2, sweet: 4, oak: 4, spice: 5, notes: "Dark cherry, fudge, and heat.", rarity: "Allocated" },
+    { name: "Blanton's", distillery: "Buffalo Trace", proof: 93, sweet: 4, oak: 3, spice: 4, notes: "Citrus, oak, and light vanilla.", rarity: "Allocated" },
+    { name: "Eagle Rare 10", distillery: "Buffalo Trace", proof: 90, sweet: 3, oak: 4, spice: 3, notes: "Toffee, orange peel, leather.", rarity: "Shelfer" },
+    { name: "Old Forester 1910", distillery: "Old Forester", proof: 93, sweet: 5, oak: 4, spice: 2, notes: "Double oaked, marshmallow, chocolate.", rarity: "Common" },
+    { name: "Old Forester 1920", distillery: "Old Forester", proof: 115, sweet: 4, oak: 3, spice: 4, notes: "Dark fruit, nuttiness, heavy heat.", rarity: "Common" },
+    { name: "Booker's", distillery: "Jim Beam", proof: 126.8, sweet: 3, oak: 5, spice: 4, notes: "Peanut, vanilla, intense wood.", rarity: "Allocated" },
+    { name: "Elijah Craig Barrel Proof", distillery: "Heaven Hill", proof: 120, sweet: 3, oak: 5, spice: 4, notes: "Deep molasses and black pepper.", rarity: "Allocated" },
+    { name: "Henry McKenna 10yr", distillery: "Heaven Hill", proof: 100, sweet: 3, oak: 4, spice: 4, notes: "Burnt sugar and rye spice.", rarity: "Shelfer" }
 ];
 
-// --- APP LOGIC ---
-let myVault = JSON.parse(localStorage.getItem("myBourbonVault") || "[]");
+let myVault = JSON.parse(localStorage.getItem("proBourbonVault") || "[]");
 
-function openTab(tabId) {
+function openTab(tabId, btn) {
     document.querySelectorAll('.content').forEach(c => c.classList.remove('active'));
     document.querySelectorAll('.t-btn').forEach(b => b.classList.remove('active'));
     document.getElementById(tabId).classList.add('active');
-    event.currentTarget.classList.add('active');
+    btn.classList.add('active');
     if(tabId === 'vault') renderVault();
     if(tabId === 'stats') renderStats();
 }
@@ -120,14 +148,11 @@ function openTab(tabId) {
 function showSuggestions(input) {
     const box = document.getElementById("suggestions");
     if (input.length < 2) { box.style.display = "none"; return; }
-    
     const matches = AI_DATABASE.filter(b => b.name.toLowerCase().includes(input.toLowerCase()));
     if (matches.length > 0) {
         box.innerHTML = matches.map(m => `<div class="suggestion-item" onclick="selectBourbon('${m.name}')">${m.name}</div>`).join('');
         box.style.display = "block";
-    } else {
-        box.style.display = "none";
-    }
+    } else { box.style.display = "none"; }
 }
 
 function selectBourbon(name) {
@@ -135,10 +160,11 @@ function selectBourbon(name) {
     document.getElementById("bName").value = b.name;
     document.getElementById("bDistillery").value = b.distillery;
     document.getElementById("bProof").value = b.proof;
-    document.getElementById("s1").value = b.sweet; document.getElementById("v1").innerText = b.sweet;
-    document.getElementById("s2").value = b.oak; document.getElementById("v2").innerText = b.oak;
-    document.getElementById("s3").value = b.spice; document.getElementById("v3").innerText = b.spice;
-    document.getElementById("bNotes").value = "Expert Notes: " + b.notes;
+    document.getElementById("s1").value = b.sweet; v1.innerText = b.sweet;
+    document.getElementById("s2").value = b.oak; v2.innerText = b.oak;
+    document.getElementById("s3").value = b.spice; v3.innerText = b.spice;
+    document.getElementById("bRarity").value = b.rarity;
+    document.getElementById("bNotes").value = "AI Notes: " + b.notes;
     document.getElementById("suggestions").style.display = "none";
 }
 
@@ -146,7 +172,10 @@ function saveBourbon() {
     const entry = {
         name: document.getElementById("bName").value,
         dist: document.getElementById("bDistillery").value,
-        proof: document.getElementById("bProof").value,
+        proof: document.getElementById("bProof").value || 0,
+        price: document.getElementById("bPrice").value || 0,
+        rarity: document.getElementById("bRarity").value,
+        wish: document.getElementById("bWish").checked,
         sweet: document.getElementById("s1").value,
         oak: document.getElementById("s2").value,
         spice: document.getElementById("s3").value,
@@ -154,53 +183,69 @@ function saveBourbon() {
         notes: document.getElementById("bNotes").value,
         id: Date.now()
     };
-    if(!entry.name) return alert("Enter a name!");
+    if(!entry.name) return alert("Bottle Name required!");
     myVault.push(entry);
-    localStorage.setItem("myBourbonVault", JSON.stringify(myVault));
-    alert("Added to Vault!");
+    localStorage.setItem("proBourbonVault", JSON.stringify(myVault));
+    alert(entry.wish ? "Added to Wishlist!" : "Vault Updated!");
     location.reload(); 
 }
 
 function renderVault() {
     const list = document.getElementById("vaultList");
     list.innerHTML = myVault.length ? myVault.map(b => `
-        <div class="log-item">
+        <div class="log-item" style="${b.wish ? 'border: 1px dashed var(--gold); opacity:0.9;' : ''}">
+            ${b.wish ? '<span class="wish-star">★</span>' : ''}
             <h3>${b.name}</h3>
-            <div class="meta">${b.dist} • ${b.proof} Proof • <strong>Score: ${b.score}/10</strong></div>
-            <p style="font-size:0.9em; margin:0;">${b.notes}</p>
-            <button class="delete-btn" onclick="deleteEntry(${b.id})">Remove Entry</button>
+            <div class="tag-row">
+                <span class="tag" style="background:var(--gold); color:black;">${b.proof} Proof</span>
+                <span class="tag ${b.rarity === 'Unicorn' || b.rarity === 'Allocated' ? 'rarity-high' : 'rarity-mid'}">${b.rarity}</span>
+                ${b.price ? `<span class="tag">$${b.price}</span>` : ''}
+            </div>
+            <div class="proof-bar"><div class="proof-fill" style="width:${Math.min(b.proof - 70, 70)}%"></div></div>
+            <p style="font-size:0.85em; color:var(--dim); margin:10px 0;">${b.notes}</p>
+            ${!b.wish ? `<div style="font-weight:bold; color:var(--gold); font-size:0.9em;">Rating: ${b.score}/10</div>` : '<div style="color:var(--gold); font-size:0.8em;">Wishlist Item</div>'}
+            <button class="delete-btn" onclick="deleteEntry(${b.id})">Remove</button>
         </div>
-    `).reverse().join('') : "<p style='text-align:center; opacity:0.5;'>Your vault is empty.</p>";
+    `).reverse().join('') : "<p style='text-align:center; opacity:0.3; padding:40px;'>No bottles in your vault yet.</p>";
 }
 
 function deleteEntry(id) {
-    myVault = myVault.filter(x => x.id !== id);
-    localStorage.setItem("myBourbonVault", JSON.stringify(myVault));
-    renderVault();
+    if(confirm("Remove this bottle?")) {
+        myVault = myVault.filter(x => x.id !== id);
+        localStorage.setItem("proBourbonVault", JSON.stringify(myVault));
+        renderVault();
+    }
 }
 
 let chart;
 function renderStats() {
+    const items = myVault.filter(x => !x.wish);
+    const avg = (key) => items.length ? items.reduce((a,b) => a + Number(b[key]), 0) / items.length : 0;
+    const totalSpend = items.reduce((a,b) => a + Number(b.price), 0);
+    
+    document.getElementById('summaryStats').innerHTML = `
+        <div class="card" style="text-align:center; padding:15px;"><div style="font-size:0.7em; color:var(--dim);">COLLECTION VALUE</div><div style="font-size:1.2em; color:var(--gold); font-weight:bold;">$${totalSpend}</div></div>
+        <div class="card" style="text-align:center; padding:15px;"><div style="font-size:0.7em; color:var(--dim);">BOTTLES</div><div style="font-size:1.2em; color:var(--gold); font-weight:bold;">${items.length}</div></div>
+    `;
+
     const ctx = document.getElementById('palateChart').getContext('2d');
     if(chart) chart.destroy();
-    
-    const avg = (key) => myVault.length ? myVault.reduce((a,b) => a + Number(b[key]), 0) / myVault.length : 0;
-
     chart = new Chart(ctx, {
         type: 'radar',
         data: {
             labels: ['Sweetness', 'Oak', 'Spice'],
             datasets: [{
-                label: 'Average Palate',
+                label: 'Your Palate',
                 data: [avg('sweet'), avg('oak'), avg('spice')],
                 backgroundColor: 'rgba(212, 162, 76, 0.2)',
                 borderColor: '#d4a24c',
-                borderWidth: 2
+                borderWidth: 3,
+                pointBackgroundColor: '#d4a24c'
             }]
         },
         options: {
-            scales: { r: { min: 0, max: 5, grid: { color: '#333' }, angleLines: { color: '#333' }, ticks: { display: false } } },
-            plugins: { legend: { labels: { color: 'white' } } }
+            scales: { r: { min: 0, max: 5, grid: { color: '#333' }, angleLines: { color: '#333' }, ticks: { display: false }, pointLabels: { color: '#888', font: { size: 12 } } } },
+            plugins: { legend: { display: false } }
         }
     });
 }
