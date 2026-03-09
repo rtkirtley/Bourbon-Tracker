@@ -6,65 +6,121 @@
 <title>Bourbon Vault Ultimate</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <style>
-body{font-family:-apple-system,sans-serif;background:#0f0f0f;color:white;padding:15px}
-h1{text-align:center;color:#d4a24c;margin-bottom:20px}
-.card{background:#1c1c1c;padding:15px;border-radius:14px;margin-bottom:20px}
-input,textarea,select{width:100%;padding:10px;margin-top:6px;margin-bottom:10px;border-radius:8px;border:none;background:#2c2c2c;color:white}
-input[type=range]{width:100%}
-button{width:100%;padding:12px;border-radius:10px;border:none;background:#d4a24c;color:black;font-weight:bold;margin-top:8px}
-.bourbon{background:#1a1a1a;padding:12px;border-radius:12px;margin-bottom:12px}
-.rank{font-size:18px;font-weight:bold;color:#d4a24c}
-.score{font-size:16px;margin-bottom:6px}
-.img-preview{width:100%;max-height:200px;object-fit:contain;margin-bottom:8px;border-radius:8px}
-.search{margin-bottom:15px;padding:8px;border-radius:8px;border:none;background:#2c2c2c;color:white}
-.chart-container{background:#1c1c1c;padding:10px;border-radius:12px;margin-top:12px}
+/* --- General Body --- */
+body {
+    font-family: -apple-system, sans-serif;
+    margin:0; padding:0;
+    background:#121212; color:white;
+}
+h1 { text-align:center; color:#d4a24c; margin:20px 0; font-size:1.6em;}
+
+/* --- Tabs --- */
+.tab-menu { display:flex; justify-content:space-around; background:#1f1f1f; }
+.tab-menu button {
+    flex:1; padding:12px; font-weight:bold;
+    border:none; background:none; color:white; cursor:pointer; transition:0.2s;
+}
+.tab-menu button.active { background:#d4a24c; color:black; border-radius:8px; }
+.tab-content { padding:15px; display:none; }
+.tab-content.active { display:block; }
+
+/* --- Card Inputs --- */
+.card { background:#1c1c1c; border-radius:14px; padding:15px; margin-bottom:20px; }
+input, textarea, select { width:100%; padding:10px; margin:6px 0 12px; border-radius:8px; border:none; background:#2c2c2c; color:white; }
+input[type=range] { width:100%; }
+button { width:100%; padding:12px; border-radius:10px; border:none; background:#d4a24c; color:black; font-weight:bold; margin-top:8px; cursor:pointer; transition:0.2s; }
+button:hover { background:#c39a4f; }
+
+/* --- Bourbon Cards --- */
+.bourbon-card { background:#1a1a1a; padding:12px; border-radius:12px; margin-bottom:12px; }
+.bourbon-card img { width:100%; max-height:180px; object-fit:contain; border-radius:8px; margin-bottom:6px; }
+
+/* --- Search Input --- */
+.search { margin-bottom:15px; padding:8px; border-radius:8px; border:none; background:#2c2c2c; color:white; }
+
+/* --- Radar Chart --- */
+.chart-container { background:#1c1c1c; padding:10px; border-radius:12px; margin-top:12px; }
+
+/* --- Responsive --- */
+@media (max-width:500px){
+    h1 { font-size:1.4em; }
+}
 </style>
 </head>
 <body>
 
 <h1>🥃 Bourbon Vault Ultimate</h1>
 
-<div class="card">
-<input id="name" placeholder="Bourbon Name">
-<input id="distillery" placeholder="Distillery">
-<input id="proof" placeholder="Proof (optional)">
-<input id="score" type="number" placeholder="Overall Score 1-10" min="1" max="10">
-
-<label>Sweet <span id="sweetVal">3</span></label>
-<input type="range" id="sweet" min="1" max="5" value="3" oninput="sweetVal.innerText=this.value">
-<label>Oak <span id="oakVal">3</span></label>
-<input type="range" id="oak" min="1" max="5" value="3" oninput="oakVal.innerText=this.value">
-<label>Spice <span id="spiceVal">3</span></label>
-<input type="range" id="spice" min="1" max="5" value="3" oninput="spiceVal.innerText=this.value">
-<label>Heat <span id="heatVal">3</span></label>
-<input type="range" id="heat" min="1" max="5" value="3" oninput="heatVal.innerText=this.value">
-<label>Complexity <span id="complexityVal">3</span></label>
-<input type="range" id="complexity" min="1" max="5" value="3" oninput="complexityVal.innerText=this.value">
-
-<input type="file" id="image" accept="image/*">
-<textarea id="notes" placeholder="Tasting Notes"></textarea>
-
-<button onclick="addBourbon()">Add Bourbon</button>
+<!-- Tab Menu -->
+<div class="tab-menu">
+    <button class="tab-btn active" data-tab="log">Log Bourbon</button>
+    <button class="tab-btn" data-tab="collection">Collection</button>
+    <button class="tab-btn" data-tab="leaderboard">Leaderboard</button>
+    <button class="tab-btn" data-tab="analytics">Analytics</button>
 </div>
 
-<input class="search" id="search" placeholder="Search your bourbon log..." oninput="render()">
+<!-- --- Tab Contents --- -->
 
-<h2>🏆 Leaderboard</h2>
-<div id="list"></div>
+<!-- Log Bourbon Tab -->
+<div class="tab-content active" id="log">
+    <div class="card">
+        <input id="name" placeholder="Bourbon Name">
+        <input id="distillery" placeholder="Distillery (auto/manual)">
+        <input id="proof" placeholder="Proof (optional)">
+        <input id="score" type="number" placeholder="Score 1-10" min="1" max="10">
+        
+        <label>Sweet <span id="sweetVal">3</span></label>
+        <input type="range" id="sweet" min="1" max="5" value="3" oninput="sweetVal.innerText=this.value">
+        <label>Oak <span id="oakVal">3</span></label>
+        <input type="range" id="oak" min="1" max="5" value="3" oninput="oakVal.innerText=this.value">
+        <label>Spice <span id="spiceVal">3</span></label>
+        <input type="range" id="spice" min="1" max="5" value="3" oninput="spiceVal.innerText=this.value">
+        <label>Heat <span id="heatVal">3</span></label>
+        <input type="range" id="heat" min="1" max="5" value="3" oninput="heatVal.innerText=this.value">
+        <label>Complexity <span id="complexityVal">3</span></label>
+        <input type="range" id="complexity" min="1" max="5" value="3" oninput="complexityVal.innerText=this.value">
 
-<h2>📊 Flavor Radar</h2>
-<canvas id="radarChart" class="chart-container"></canvas>
+        <input type="file" id="image" accept="image/*">
+        <textarea id="notes" placeholder="Tasting Notes"></textarea>
+        <button onclick="addBourbon()">Add Bourbon</button>
+    </div>
+</div>
+
+<!-- Collection Tab -->
+<div class="tab-content" id="collection">
+    <input class="search" id="search" placeholder="Search collection..." oninput="renderCollection()">
+    <div id="collectionList"></div>
+</div>
+
+<!-- Leaderboard Tab -->
+<div class="tab-content" id="leaderboard">
+    <div id="leaderList"></div>
+</div>
+
+<!-- Analytics Tab -->
+<div class="tab-content" id="analytics">
+    <canvas id="radarChart" class="chart-container"></canvas>
+</div>
 
 <script>
+// --- Tabs ---
+const tabs = document.querySelectorAll('.tab-btn');
+tabs.forEach(btn => btn.addEventListener('click', () => {
+    document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(c=>c.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById(btn.dataset.tab).classList.add('active');
+}));
+
 // --- Data Store ---
-let bourbons = JSON.parse(localStorage.getItem("bourbons") || "[]")
+let bourbons = JSON.parse(localStorage.getItem("bourbons") || "[]");
 function save(){ localStorage.setItem("bourbons", JSON.stringify(bourbons)) }
 
 // --- Add Bourbon ---
 function addBourbon(){
-    const file = document.getElementById("image").files[0]
+    const file = document.getElementById("image").files[0];
     if(file){
-        const reader = new FileReader()
+        const reader = new FileReader();
         reader.onload = function(e){ saveBData(e.target.result) }
         reader.readAsDataURL(file)
     } else saveBData(null)
@@ -82,55 +138,59 @@ function saveBData(imgData){
         complexity:Number(complexity.value),
         notes:notes.value,
         img:imgData
-    }
-    bourbons.push(b)
-    bourbons.sort((a,b)=>b.score-a.score)
-    save()
-    render()
-    document.querySelectorAll("input,textarea").forEach(el=>{ if(el.type!=="file") el.value="" })
-    sweet.value=oak.value=spice.value=heat.value=complexity.value=3
-    sweetVal.innerText=oakVal.innerText=spiceVal.innerText=heatVal.innerText=complexityVal.innerText=3
+    };
+    bourbons.push(b);
+    bourbons.sort((a,b)=>b.score-b.score ? b.score-a.score : a.name.localeCompare(b.name))
+    save();
+    renderCollection();
+    renderLeaderboard();
+    updateRadar();
+    document.querySelectorAll("input,textarea").forEach(el=>{ if(el.type!=="file") el.value="" });
+    sweet.value=oak.value=spice.value=heat.value=complexity.value=3;
+    sweetVal.innerText=oakVal.innerText=spiceVal.innerText=heatVal.innerText=complexityVal.innerText=3;
 }
 
 // --- Delete ---
-function deleteBourbon(i){
-    if(confirm("Delete this bourbon?")){
-        bourbons.splice(i,1)
-        save()
-        render()
-    }
-}
+function deleteBourbon(i){ if(confirm("Delete this bourbon?")){ bourbons.splice(i,1); save(); renderCollection(); renderLeaderboard(); updateRadar() }}
 
-// --- Render ---
-function render(){
-    const term = search.value.toLowerCase()
-    let html=""
+// --- Collection Render ---
+function renderCollection(){
+    const term = document.getElementById("search").value.toLowerCase();
+    let html="";
     bourbons.filter(b=>b.name.toLowerCase().includes(term)).forEach((b,i)=>{
-        html+=`<div class="bourbon">
-        <div class="rank">#${i+1} ${b.name}</div>
-        <div>${b.distillery}${b.proof?' - '+b.proof+'°':''}</div>
-        <div class="score">⭐ ${b.score}/10</div>
+        html+=`<div class="bourbon-card">
+        <div><strong>${b.name}</strong> ${b.proof?'- '+b.proof+'°':''}</div>
+        <div>${b.distillery}</div>
+        <div>Score: ${b.score}/10</div>
         <div>Sweet:${b.sweet} Oak:${b.oak} Spice:${b.spice} Heat:${b.heat} Complexity:${b.complexity}</div>
-        ${b.img?`<img src="${b.img}" class="img-preview">`:''}
+        ${b.img?`<img src="${b.img}">`:''}
         <div>${b.notes}</div>
         <button onclick="deleteBourbon(${i})">Delete</button>
-        </div>`
-    })
-    list.innerHTML = html
-    updateRadar()
+        </div>`;
+    });
+    document.getElementById("collectionList").innerHTML = html;
 }
-render()
+renderCollection();
+
+// --- Leaderboard ---
+function renderLeaderboard(){
+    let html="";
+    bourbons.sort((a,b)=>b.score-a.score).forEach((b,i)=>{
+        html+=`<div class="bourbon-card">
+        <div>#${i+1} ${b.name} - ${b.score}/10</div>
+        </div>`;
+    });
+    document.getElementById("leaderList").innerHTML = html;
+}
+renderLeaderboard();
 
 // --- Radar Chart ---
 let radarChart = new Chart(document.getElementById('radarChart'),{
     type:'radar',
-    data:{
-        labels:['Sweet','Oak','Spice','Heat','Complexity'],
-        datasets:[]
-    },
+    data:{ labels:['Sweet','Oak','Spice','Heat','Complexity'], datasets:[] },
     options:{
         scales:{r:{min:0,max:5,ticks:{stepSize:1}}},
-        plugins:{legend:{display:true,labels:{color:'white'}}},
+        plugins:{legend:{display:true,labels:{color:'white'}}}
     }
 })
 function updateRadar(){
@@ -141,9 +201,11 @@ function updateRadar(){
         backgroundColor:'rgba(212,162,76,0.2)',
         borderColor:'#d4a24c',
         pointBackgroundColor:'#d4a24c'
-    }))
-    radarChart.update()
+    }));
+    radarChart.update();
 }
+updateRadar();
 </script>
+
 </body>
 </html>
