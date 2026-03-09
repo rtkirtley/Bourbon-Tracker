@@ -1,266 +1,209 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Bourbon Vault Ultimate</title>
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<style>
-body { font-family:-apple-system,sans-serif; margin:0; padding:0; background:#121212; color:white;}
-h1 { text-align:center; color:#d4a24c; margin:20px 0; font-size:1.6em;}
-.tab-menu { display:flex; justify-content:space-around; background:#1f1f1f; }
-.tab-menu button { flex:1; padding:12px; font-weight:bold; border:none; background:none; color:white; cursor:pointer; transition:0.2s; }
-.tab-menu button.active { background:#d4a24c; color:black; border-radius:8px; }
-.tab-content { padding:15px; display:none; }
-.tab-content.active { display:block; }
-.card { background:#1c1c1c; border-radius:14px; padding:15px; margin-bottom:20px; }
-input, textarea, select { width:100%; padding:10px; margin:6px 0 12px; border-radius:8px; border:none; background:#2c2c2c; color:white; }
-input[type=range]{width:100%;}
-button{width:100%;padding:12px;border-radius:10px;border:none;background:#d4a24c;color:black;font-weight:bold;margin-top:8px;cursor:pointer;transition:0.2s;}
-button:hover{background:#c39a4f;}
-.bourbon-card { background:#1a1a1a; padding:12px; border-radius:12px; margin-bottom:12px; }
-.bourbon-card img { width:100%; max-height:180px; object-fit:contain; border-radius:8px; margin-bottom:6px; }
-.search { margin-bottom:15px; padding:8px; border-radius:8px; border:none; background:#2c2c2c; color:white; }
-.autocomplete-suggestions { background:#2c2c2c; border-radius:8px; max-height:200px; overflow-y:auto; position:absolute; z-index:1000; width:calc(100% - 30px); }
-.autocomplete-suggestions div { padding:8px; cursor:pointer; }
-.autocomplete-suggestions div:hover { background:#d4a24c; color:black; }
-.chart-container { background:#1c1c1c; padding:10px; border-radius:12px; margin-top:12px; }
-@media (max-width:500px){ h1{font-size:1.4em;} }
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Bourbon Vault</title>
+    
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root { --gold: #d4a24c; --bg: #0f0f0f; --card: #1a1a1a; --text: #e0e0e0; }
+        body { font-family: -apple-system, system-ui; margin: 0; background: var(--bg); color: var(--text); padding-bottom: 60px; }
+        
+        header { padding: 50px 20px 20px; text-align: center; border-bottom: 1px solid #222; }
+        h1 { color: var(--gold); margin: 0; font-size: 1.5em; text-transform: uppercase; letter-spacing: 2px; }
+
+        .tabs { display: flex; sticky: top; background: var(--card); margin: 15px; border-radius: 12px; padding: 4px; }
+        .tabs button { flex: 1; padding: 12px; border: none; background: none; color: #777; font-weight: bold; border-radius: 8px; }
+        .tabs button.active { background: var(--gold); color: black; }
+
+        .content { padding: 0 15px; display: none; }
+        .content.active { display: block; }
+
+        .card { background: var(--card); border-radius: 15px; padding: 20px; margin-bottom: 15px; }
+        input, textarea { width: 100%; padding: 12px; margin: 10px 0; border-radius: 8px; border: 1px solid #333; background: #252525; color: white; font-size: 16px; box-sizing: border-box; }
+        
+        .suggestion-box { background: #252525; border-radius: 8px; max-height: 150px; overflow-y: auto; display: none; margin-top: -10px; border: 1px solid var(--gold); }
+        .suggestion-item { padding: 12px; border-bottom: 1px solid #333; font-size: 0.9em; }
+
+        button.primary { width: 100%; padding: 15px; border-radius: 12px; border: none; background: var(--gold); color: black; font-weight: bold; font-size: 1em; margin-top: 10px; }
+        
+        .stat-row { display: flex; justify-content: space-between; margin: 10px 0 5px; color: var(--gold); font-size: 0.8em; }
+        input[type=range] { width: 100%; accent-color: var(--gold); }
+
+        .log-item { background: var(--card); padding: 15px; border-radius: 15px; margin-bottom: 15px; border-left: 4px solid var(--gold); }
+        .log-item h3 { margin: 0; color: var(--gold); }
+        .log-item .meta { font-size: 0.8em; opacity: 0.6; margin-bottom: 10px; }
+        .delete-btn { color: #ff5555; background: none; border: none; font-size: 0.8em; margin-top: 10px; padding: 0; }
+    </style>
 </head>
 <body>
 
-<h1>🥃 Bourbon Vault Ultimate</h1>
+<header>
+    <h1>Bourbon Vault</h1>
+</header>
 
-<div class="tab-menu">
-  <button class="tab-btn active" data-tab="log">Log Bourbon</button>
-  <button class="tab-btn" data-tab="collection">Collection</button>
-  <button class="tab-btn" data-tab="leaderboard">Leaderboard</button>
-  <button class="tab-btn" data-tab="analytics">Analytics</button>
+<div class="tabs">
+    <button class="t-btn active" onclick="openTab('log')">Log</button>
+    <button class="t-btn" onclick="openTab('vault')">My Vault</button>
+    <button class="t-btn" onclick="openTab('stats')">Analytics</button>
 </div>
 
-<!-- Log Tab -->
-<div class="tab-content active" id="log">
-  <div class="card">
-    <input id="bourbonName" placeholder="Bourbon Name" autocomplete="off">
-    <div id="autocomplete-list" class="autocomplete-suggestions"></div>
-    <input id="bourbonDistillery" placeholder="Distillery">
-    <input id="bourbonProof" placeholder="Proof (optional)">
-    <input id="bourbonScore" type="number" placeholder="Score 1-10" min="0" max="10">
-    <label>Sweet <span id="sweetVal">3</span></label>
-    <input type="range" id="sweet" min="1" max="5" value="3" oninput="sweetVal.innerText=this.value">
-    <label>Oak <span id="oakVal">3</span></label>
-    <input type="range" id="oak" min="1" max="5" value="3" oninput="oakVal.innerText=this.value">
-    <label>Spice <span id="spiceVal">3</span></label>
-    <input type="range" id="spice" min="1" max="5" value="3" oninput="spiceVal.innerText=this.value">
-    <label>Heat <span id="heatVal">3</span></label>
-    <input type="range" id="heat" min="1" max="5" value="3" oninput="heatVal.innerText=this.value">
-    <label>Complexity <span id="complexityVal">3</span></label>
-    <input type="range" id="complexity" min="1" max="5" value="3" oninput="complexityVal.innerText=this.value">
-    <textarea id="bourbonNotes" placeholder="Tasting Notes"></textarea>
-    <button onclick="addBourbon()">Add Bourbon</button>
-  </div>
+<div id="log" class="content active">
+    <div class="card">
+        <input id="bName" placeholder="Bourbon Name..." oninput="showSuggestions(this.value)">
+        <div id="suggestions" class="suggestion-box"></div>
+        
+        <input id="bDistillery" placeholder="Distillery">
+        <input id="bProof" placeholder="Proof">
+        
+        <div class="stat-row"><span>Sweetness</span><span id="v1">3</span></div>
+        <input type="range" id="s1" min="1" max="5" value="3" oninput="v1.innerText=this.value">
+        
+        <div class="stat-row"><span>Oak/Wood</span><span id="v2">3</span></div>
+        <input type="range" id="s2" min="1" max="5" value="3" oninput="v2.innerText=this.value">
+        
+        <div class="stat-row"><span>Spice/Heat</span><span id="v3">3</span></div>
+        <input type="range" id="s3" min="1" max="5" value="3" oninput="v3.innerText=this.value">
+
+        <input id="bScore" type="number" placeholder="Your Score (1-10)">
+        <textarea id="bNotes" placeholder="Personal tasting notes..."></textarea>
+        
+        <button class="primary" onclick="saveBourbon()">Add to Collection</button>
+    </div>
 </div>
 
-<!-- Collection Tab -->
-<div class="tab-content" id="collection">
-  <input class="search" id="search" placeholder="Search collection..." oninput="renderCollection()">
-  <div id="collectionList"></div>
+<div id="vault" class="content">
+    <div id="vaultList"></div>
 </div>
 
-<!-- Leaderboard Tab -->
-<div class="tab-content" id="leaderboard">
-  <div id="leaderList"></div>
-</div>
-
-<!-- Analytics Tab -->
-<div class="tab-content" id="analytics">
-  <canvas id="radarChart" class="chart-container"></canvas>
+<div id="stats" class="content">
+    <div class="card">
+        <h3 style="text-align:center; color:var(--gold)">Palate Overview</h3>
+        <canvas id="palateChart"></canvas>
+    </div>
 </div>
 
 <script>
-// --- Tabs ---
-const tabs = document.querySelectorAll('.tab-btn');
-tabs.forEach(btn => btn.addEventListener('click', () => {
-    document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
-    document.querySelectorAll('.tab-content').forEach(c=>c.classList.remove('active'));
-    btn.classList.add('active');
-    document.getElementById(btn.dataset.tab).classList.add('active');
-}));
-
-// --- AI-generated Bourbon Database (Expanded) ---
-const bourbonNames = [
-  "Buffalo Trace","Eagle Rare 10","Four Roses Single Barrel","Blanton's","Elijah Craig 12",
-  "Woodford Reserve","Bulleit Bourbon","Knob Creek","Wild Turkey 101","Maker's Mark",
-  "Noah's Mill","Parker's Heritage","Michter's","Old Forester","Stagg Jr","Weller Special Reserve",
-  "Henry McKenna 10","Russell's Reserve 10","George T. Stagg","Four Roses Small Batch","Four Roses 100 Proof",
-  "Old Rip Van Winkle 10","Old Rip Van Winkle 12","Van Winkle Special Reserve","Booker's","Colonel E.H. Taylor Small Batch",
-  "Angel's Envy","1792 Ridgemont","Rebel Yell","Prichard's","Jefferson's","High West","Bardstown Bourbon","Belle Meade",
-  "Smooth Ambler","Clyde May's","Whistlepig Rye","Balcones","Woodinville","Kings County","Old Forester 1897","Old Forester Birthday Bourbon",
-  "Rittenhouse Rye","Redemption Rye","Breckenridge Bourbon","Templeton Rye","Garrison Brothers","Corsair","Belle Meade Sherry Cask",
-  "Willett","Orphan Barrel","Stranahan's","Dad's Hat"
+// --- AI GENERATED MASTER DATABASE ---
+const AI_DATABASE = [
+    { name: "Buffalo Trace", distillery: "Buffalo Trace", proof: 90, sweet: 4, oak: 3, spice: 2, notes: "Vanilla, caramel, and a hint of mint." },
+    { name: "Eagle Rare 10", distillery: "Buffalo Trace", proof: 90, sweet: 3, oak: 4, spice: 3, notes: "Complex herbs, honey, and leather." },
+    { name: "Blanton's Single Barrel", distillery: "Buffalo Trace", proof: 93, sweet: 4, oak: 3, spice: 4, notes: "Creamy vanilla, citrus, and oak." },
+    { name: "Woodford Reserve", distillery: "Woodford Reserve", proof: 90, sweet: 3, oak: 3, spice: 3, notes: "Rich dried fruit and cocoa." },
+    { name: "Wild Turkey 101", distillery: "Wild Turkey", proof: 101, sweet: 2, oak: 3, spice: 5, notes: "Bold spice, pepper, and deep oak." },
+    { name: "Maker's Mark", distillery: "Maker's Mark", proof: 90, sweet: 5, oak: 2, spice: 2, notes: "Wheat-based, very sweet and smooth." },
+    { name: "Knob Creek 9", distillery: "Jim Beam", proof: 100, sweet: 3, oak: 5, spice: 3, notes: "Robust, charred oak and toasted nuts." },
+    { name: "Old Forester 1910", distillery: "Old Forester", proof: 93, sweet: 5, oak: 4, spice: 2, notes: "Double oaked, tastes like toasted marshmallows." },
+    { name: "Elijah Craig Small Batch", distillery: "Heaven Hill", proof: 94, sweet: 3, oak: 4, spice: 3, notes: "Nutty, vanilla, and slight fruit." },
+    { name: "Basil Hayden", distillery: "Jim Beam", proof: 80, sweet: 4, oak: 2, spice: 3, notes: "Light, spicy, and easy to drink." },
+    { name: "Weller Special Reserve", distillery: "Buffalo Trace", proof: 90, sweet: 5, oak: 2, spice: 2, notes: "Butterscotch and soft honey notes." },
+    { name: "Angel's Envy", distillery: "Angel's Envy", proof: 86, sweet: 5, oak: 2, spice: 2, notes: "Finished in Port casks, very fruity." },
+    { name: "Bulleit Bourbon", distillery: "Bulleit", proof: 90, sweet: 2, oak: 3, spice: 4, notes: "High rye content, crisp and spicy." }
 ];
-const bourbonDB = [];
-for(let i=0;i<1000;i++){
-    const name = bourbonNames[i % bourbonNames.length] + " #" + (i+1);
-    bourbonDB.push({
-        name:name,
-        distillery:"Distillery " + ((i%50)+1),
-        proof:80 + (i%21),
-        score:Math.floor(Math.random()*10)+1,
-        sweet:Math.floor(Math.random()*5)+1,
-        oak:Math.floor(Math.random()*5)+1,
-        spice:Math.floor(Math.random()*5)+1,
-        heat:Math.floor(Math.random()*5)+1,
-        complexity:Math.floor(Math.random()*5)+1
-    });
+
+// --- APP LOGIC ---
+let myVault = JSON.parse(localStorage.getItem("myBourbonVault") || "[]");
+
+function openTab(tabId) {
+    document.querySelectorAll('.content').forEach(c => c.classList.remove('active'));
+    document.querySelectorAll('.t-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById(tabId).classList.add('active');
+    event.currentTarget.classList.add('active');
+    if(tabId === 'vault') renderVault();
+    if(tabId === 'stats') renderStats();
 }
 
-// --- Data Store ---
-let bourbons = JSON.parse(localStorage.getItem("bourbons") || "[]");
-function save(){ localStorage.setItem("bourbons", JSON.stringify(bourbons)) }
-
-// --- Wikipedia API Image Search ---
-async function fetchBourbonImage(name){
-    try {
-        const url = `https://en.wikipedia.org/w/api.php?action=query&format=json&origin=*&prop=pageimages&piprop=original&titles=${encodeURIComponent(name+' bourbon')}`;
-        const res = await fetch(url);
-        const data = await res.json();
-        const pages = data.query.pages;
-        const key = Object.keys(pages)[0];
-        if(pages[key].original) return pages[key].original.source;
-    } catch(e){ console.log("Wiki API error:", e) }
-    return null;
+function showSuggestions(input) {
+    const box = document.getElementById("suggestions");
+    if (input.length < 2) { box.style.display = "none"; return; }
+    
+    const matches = AI_DATABASE.filter(b => b.name.toLowerCase().includes(input.toLowerCase()));
+    if (matches.length > 0) {
+        box.innerHTML = matches.map(m => `<div class="suggestion-item" onclick="selectBourbon('${m.name}')">${m.name}</div>`).join('');
+        box.style.display = "block";
+    } else {
+        box.style.display = "none";
+    }
 }
 
-// --- Autocomplete ---
-const inputName = document.getElementById("bourbonName");
-const autocompleteList = document.getElementById("autocomplete-list");
-inputName.addEventListener("input", ()=>{
-    const val = inputName.value.toLowerCase();
-    autocompleteList.innerHTML = "";
-    if(!val) return;
-    const matches = bourbonDB.filter(b=>b.name.toLowerCase().includes(val)).slice(0,10);
-    matches.forEach(b=>{
-        const div = document.createElement("div");
-        div.textContent = b.name;
-        div.addEventListener("click", ()=>{
-            inputName.value = b.name;
-            document.getElementById("bourbonDistillery").value = b.distillery;
-            document.getElementById("bourbonProof").value = b.proof;
-            document.getElementById("bourbonScore").value = b.score;
-            document.getElementById("sweet").value = b.sweet; sweetVal.innerText=b.sweet;
-            document.getElementById("oak").value = b.oak; oakVal.innerText=b.oak;
-            document.getElementById("spice").value = b.spice; spiceVal.innerText=b.spice;
-            document.getElementById("heat").value = b.heat; heatVal.innerText=b.heat;
-            document.getElementById("complexity").value = b.complexity; complexityVal.innerText=b.complexity;
-            autocompleteList.innerHTML = "";
-        });
-        autocompleteList.appendChild(div);
-    });
-});
+function selectBourbon(name) {
+    const b = AI_DATABASE.find(x => x.name === name);
+    document.getElementById("bName").value = b.name;
+    document.getElementById("bDistillery").value = b.distillery;
+    document.getElementById("bProof").value = b.proof;
+    document.getElementById("s1").value = b.sweet; document.getElementById("v1").innerText = b.sweet;
+    document.getElementById("s2").value = b.oak; document.getElementById("v2").innerText = b.oak;
+    document.getElementById("s3").value = b.spice; document.getElementById("v3").innerText = b.spice;
+    document.getElementById("bNotes").value = "Expert Notes: " + b.notes;
+    document.getElementById("suggestions").style.display = "none";
+}
 
-// --- Add Bourbon ---
-async function addBourbon() {
-    const nameEl = document.getElementById("bourbonName");
-    const distEl = document.getElementById("bourbonDistillery");
-    const proofEl = document.getElementById("bourbonProof");
-    const scoreEl = document.getElementById("bourbonScore");
-    const sweetEl = document.getElementById("sweet");
-    const oakEl = document.getElementById("oak");
-    const spiceEl = document.getElementById("spice");
-    const heatEl = document.getElementById("heat");
-    const complexityEl = document.getElementById("complexity");
-    const notesEl = document.getElementById("bourbonNotes");
-
-    const nameVal = nameEl.value.trim();
-    if(!nameVal){ alert("Enter bourbon name"); return; }
-    let distVal = distEl.value.trim(); if(!distVal) distVal=nameVal;
-
-    const scoreVal = Number(scoreEl.value) || 0;
-
-    let imgUrl = null;
-    try { imgUrl = await fetchBourbonImage(nameVal); } catch(e){ console.log(e) }
-
-    const bourbon = {
-        name: nameVal,
-        distillery: distVal,
-        proof: proofEl.value,
-        score: scoreVal,
-        sweet: Number(sweetEl.value),
-        oak: Number(oakEl.value),
-        spice: Number(spiceEl.value),
-        heat: Number(heatEl.value),
-        complexity: Number(complexityEl.value),
-        notes: notesEl.value,
-        img: imgUrl
+function saveBourbon() {
+    const entry = {
+        name: document.getElementById("bName").value,
+        dist: document.getElementById("bDistillery").value,
+        proof: document.getElementById("bProof").value,
+        sweet: document.getElementById("s1").value,
+        oak: document.getElementById("s2").value,
+        spice: document.getElementById("s3").value,
+        score: document.getElementById("bScore").value,
+        notes: document.getElementById("bNotes").value,
+        id: Date.now()
     };
-
-    bourbons.push(bourbon);
-    bourbons.sort((a,b) => b.score - a.score);
-    save();
-    renderCollection();
-    renderLeaderboard();
-    updateRadar();
-
-    // Reset inputs
-    [nameEl, distEl, proofEl, scoreEl, notesEl].forEach(i=>i.value="");
-    [sweetEl, oakEl, spiceEl, heatEl, complexityEl].forEach(i=>i.value=3);
-    ["sweetVal","oakVal","spiceVal","heatVal","complexityVal"].forEach(id=>document.getElementById(id).innerText=3);
+    if(!entry.name) return alert("Enter a name!");
+    myVault.push(entry);
+    localStorage.setItem("myBourbonVault", JSON.stringify(myVault));
+    alert("Added to Vault!");
+    location.reload(); 
 }
 
-// --- Delete ---
-function deleteBourbon(i){ if(confirm("Delete this bourbon?")){ bourbons.splice(i,1); save(); renderCollection(); renderLeaderboard(); updateRadar() }}
+function renderVault() {
+    const list = document.getElementById("vaultList");
+    list.innerHTML = myVault.length ? myVault.map(b => `
+        <div class="log-item">
+            <h3>${b.name}</h3>
+            <div class="meta">${b.dist} • ${b.proof} Proof • <strong>Score: ${b.score}/10</strong></div>
+            <p style="font-size:0.9em; margin:0;">${b.notes}</p>
+            <button class="delete-btn" onclick="deleteEntry(${b.id})">Remove Entry</button>
+        </div>
+    `).reverse().join('') : "<p style='text-align:center; opacity:0.5;'>Your vault is empty.</p>";
+}
 
-// --- Render Collection ---
-function renderCollection(){
-    const term = document.getElementById("search").value.toLowerCase();
-    let html="";
-    bourbons.filter(b=>b.name.toLowerCase().includes(term)).forEach((b,i)=>{
-        html+=`<div class="bourbon-card">
-        <div><strong>${b.name}</strong> ${b.proof?'- '+b.proof+'°':''}</div>
-        <div>${b.distillery}</div>
-        <div>Score: ${b.score}/10</div>
-        <div>Sweet:${b.sweet} Oak:${b.oak} Spice:${b.spice} Heat:${b.heat} Complexity:${b.complexity}</div>
-        ${b.img?`<img src="${b.img}">`:''}
-        <div>${b.notes}</div>
-        <button onclick="deleteBourbon(${i})">Delete</button>
-        </div>`;
+function deleteEntry(id) {
+    myVault = myVault.filter(x => x.id !== id);
+    localStorage.setItem("myBourbonVault", JSON.stringify(myVault));
+    renderVault();
+}
+
+let chart;
+function renderStats() {
+    const ctx = document.getElementById('palateChart').getContext('2d');
+    if(chart) chart.destroy();
+    
+    const avg = (key) => myVault.length ? myVault.reduce((a,b) => a + Number(b[key]), 0) / myVault.length : 0;
+
+    chart = new Chart(ctx, {
+        type: 'radar',
+        data: {
+            labels: ['Sweetness', 'Oak', 'Spice'],
+            datasets: [{
+                label: 'Average Palate',
+                data: [avg('sweet'), avg('oak'), avg('spice')],
+                backgroundColor: 'rgba(212, 162, 76, 0.2)',
+                borderColor: '#d4a24c',
+                borderWidth: 2
+            }]
+        },
+        options: {
+            scales: { r: { min: 0, max: 5, grid: { color: '#333' }, angleLines: { color: '#333' }, ticks: { display: false } } },
+            plugins: { legend: { labels: { color: 'white' } } }
+        }
     });
-    document.getElementById("collectionList").innerHTML = html;
 }
-renderCollection();
-
-// --- Leaderboard ---
-function renderLeaderboard(){
-    let html="";
-    bourbons.sort((a,b)=>b.score-a.score).forEach((b,i)=>{
-        html+=`<div class="bourbon-card">
-        <div>#${i+1} ${b.name} - ${b.score}/10</div>
-        </div>`;
-    });
-    document.getElementById("leaderList").innerHTML = html;
-}
-renderLeaderboard();
-
-// --- Radar Chart ---
-let radarChart = new Chart(document.getElementById('radarChart'),{
-    type:'radar',
-    data:{ labels:['Sweet','Oak','Spice','Heat','Complexity'], datasets:[] },
-    options:{ scales:{r:{min:0,max:5,ticks:{stepSize:1}}}, plugins:{legend:{display:true,labels:{color:'white'}}}}
-})
-function updateRadar(){
-    radarChart.data.datasets = bourbons.slice(0,5).map((b,i)=>({
-        label:`#${i+1} ${b.name}`,
-        data:[b.sweet,b.oak,b.spice,b.heat,b.complexity],
-        fill:true,
-        backgroundColor:'rgba(212,162,76,0.2)',
-        borderColor:'#d4a24c',
-        pointBackgroundColor:'#d4a24c'
-    }));
-    radarChart.update();
-}
-updateRadar();
 </script>
 </body>
 </html>
