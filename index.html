@@ -35,14 +35,12 @@
         .btn { width: 100%; padding: 16px; border-radius: 12px; border: none; font-weight: 800; font-size: 0.9em; text-transform: uppercase; cursor: pointer; margin-top: 10px; }
         .btn-gold { background: linear-gradient(145deg, var(--gold), var(--gold-dim)); color: black; }
         .btn-dark { background: #222; color: var(--gold); border: 1px solid #333; }
+        .btn-danger { background: rgba(255, 68, 68, 0.1); color: var(--hot); border: 1px solid var(--hot); font-size: 0.7em; padding: 8px; margin-top: 15px; width: auto; border-radius: 6px; }
         
         #scanner-container { width: 100%; height: 200px; background: #000; border-radius: 12px; margin-bottom: 15px; overflow: hidden; display: none; border: 2px solid var(--gold); position: relative; }
         #scanner-container video { width: 100%; height: 100%; object-fit: cover; }
 
-        .photo-container { width: 100%; height: 100px; background: #1a1a1a; border-radius: 12px; border: 1px dashed #444; display: flex; align-items: center; justify-content: center; color: var(--dim); overflow: hidden; margin: 10px 0; }
-        .photo-container img { width: 100%; height: 100%; object-fit: cover; }
-
-        .vault-item { background: var(--card); padding: 18px; border-radius: 16px; margin-bottom: 15px; border: 1px solid #222; }
+        .vault-item { background: var(--card); padding: 18px; border-radius: 16px; margin-bottom: 15px; border: 1px solid #222; position: relative; }
         .item-header { display: flex; gap: 12px; align-items: center; }
         .item-photo-mini { width: 50px; height: 50px; border-radius: 8px; object-fit: cover; background: #222; border: 1px solid #333; }
         
@@ -78,9 +76,9 @@
             <input id="bPrice" type="number" placeholder="Price $">
         </div>
 
-        <div class="photo-container" onclick="document.getElementById('photoInput').click()">
+        <div onclick="document.getElementById('photoInput').click()" style="height:100px; background:#1a1a1a; border-radius:12px; border:1px dashed #444; display:flex; align-items:center; justify-content:center; color:var(--dim); overflow:hidden; margin:10px 0;">
             <span id="photoPlaceholder">📷 Add Photo</span>
-            <img id="photoPreview" style="display:none;">
+            <img id="photoPreview" style="display:none; width:100%; height:100%; object-fit:cover;">
         </div>
         <input type="file" id="photoInput" accept="image/*" capture="camera" onchange="handlePhoto(this)" style="display:none;">
         
@@ -100,69 +98,106 @@
     </div>
 </div>
 
-<div id="vault" class="content"><div id="vaultList"></div></div>
+<div id="vault" class="content">
+    <input id="vaultSearch" placeholder="Search your vault..." oninput="renderVault(this.value)" style="margin-bottom:15px; border-color:var(--gold);">
+    <div id="vaultList"></div>
+</div>
+
 <div id="stats" class="content"><div class="card"><canvas id="palateChart"></canvas></div></div>
 <div id="toast" class="toast">Bottle Saved!</div>
 
 <script>
+// --- LOCAL DATABASE ---
 const AI_DATABASE = [
     { name: "Noah's Mill", distillery: "Willett", proof: 114.3, sweet: 3, oak: 4, spice: 5, notes: "Walnut and heavy spice." },
     { name: "Four Roses Single Barrel", distillery: "Four Roses", proof: 100, sweet: 2, oak: 3, spice: 5, notes: "Floral and high-rye spice." },
     { name: "Eagle Rare 10", distillery: "Buffalo Trace", proof: 90, sweet: 4, oak: 4, spice: 2, notes: "Orange and leather." }
 ];
 
-// --- ROBUST DATABASE SETUP ---
 let db;
-const DB_NAME = "BourbonVaultDB_v2"; // Incremented version to clear old data bugs
-const request = indexedDB.open(DB_NAME, 1);
+const request = indexedDB.open("BourbonVaultDB_v3", 1);
+request.onupgradeneeded = e => { e.target.result.createObjectStore("bottles", { keyPath: "id" }); };
+request.onsuccess = e => { db = e.target.result; renderVault(); };
 
-request.onupgradeneeded = e => {
-    let dbInstance = e.target.result;
-    if (!dbInstance.objectStoreNames.contains("bottles")) {
-        dbInstance.createObjectStore("bottles", { keyPath: "id" });
+// --- SCANNER FIX ---
+let isScanning = false;
+function toggleScanner() {
+    const cont = document.getElementById('scanner-container');
+    const btn = document.getElementById('scanBtn');
+    if (isScanning) { 
+        Quagga.stop(); 
+        cont.style.display = 'none'; 
+        btn.innerText = '🔍 Scan Barcode'; 
+        isScanning = false; 
+    } else { 
+        cont.style.display = 'block'; 
+        btn.innerText = '🛑 Stop Scanner'; 
+        isScanning = true; 
+        startScanner(); 
     }
-};
-
-request.onsuccess = e => { 
-    db = e.target.result; 
-    console.log("DB Connected");
-    renderVault(); 
-};
-
-request.onerror = e => console.error("DB Error", e);
-
-// --- SELECTION BUG FIX ---
-function showSuggestions(val) {
-    const box = document.getElementById("suggestions");
-    if (val.length < 2) { box.style.display = "none"; return; }
-    const matches = AI_DATABASE.filter(b => b.name.toLowerCase().includes(val.toLowerCase()));
-    if (matches.length) {
-        box.innerHTML = matches.map((m) => 
-            `<div class="suggestion-item" onmousedown="selectLocalBourbon(${AI_DATABASE.indexOf(m)})">${m.name}</div>`
-        ).join('');
-        box.style.display = "block";
-    } else { box.style.display = "none"; }
-}
-function hideSuggestions() { setTimeout(() => { document.getElementById("suggestions").style.display = "none"; }, 200); }
-
-function selectLocalBourbon(idx) {
-    const b = AI_DATABASE[idx];
-    document.getElementById("bName").value = b.name;
-    document.getElementById("bDistillery").value = b.distillery;
-    document.getElementById("bProof").value = b.proof;
-    document.getElementById("s1").value = b.sweet; v1.innerText = b.sweet;
-    document.getElementById("s2").value = b.oak; v2.innerText = b.oak;
-    document.getElementById("s3").value = b.spice; v3.innerText = b.spice;
-    document.getElementById("bNotes").value = b.notes;
 }
 
-// --- CORE SAVE LOGIC ---
+function startScanner() {
+    Quagga.init({
+        inputStream: { name: "Live", type: "LiveStream", target: document.querySelector('#scanner-container'), constraints: { facingMode: "environment" } },
+        decoder: { readers: ["upc_reader", "upc_e_reader", "ean_reader"] }
+    }, (err) => { 
+        if (err) { alert("Camera Error: " + err); return; }
+        Quagga.start(); 
+    });
+
+    Quagga.onDetected(async (data) => {
+        const code = data.codeResult.code;
+        Quagga.stop();
+        toggleScanner();
+        try {
+            const res = await fetch(`https://world.openfoodfacts.org/api/v0/product/${code}.json`);
+            const json = await res.json();
+            if (json.status === 1) {
+                document.getElementById('bName').value = json.product.product_name || "";
+                document.getElementById('bDistillery').value = json.product.brands || "";
+            } else { alert("Product not found in Cloud Database."); }
+        } catch (e) { alert("Network error connecting to Cloud."); }
+    });
+}
+
+// --- VAULT & DELETE LOGIC ---
+function renderVault(filter = "") {
+    if (!db) return;
+    const store = db.transaction("bottles").objectStore("bottles");
+    store.getAll().onsuccess = e => {
+        const bottles = e.target.result;
+        const list = document.getElementById("vaultList");
+        const filtered = bottles.filter(b => b.name.toLowerCase().includes(filter.toLowerCase()));
+        
+        list.innerHTML = filtered.map(b => `
+            <div class="vault-item">
+                <div class="item-header">
+                    <img src="${b.photo || 'https://cdn-icons-png.flaticon.com/512/931/931920.png'}" class="item-photo-mini">
+                    <div><h3 style="margin:0; color:var(--gold);">${b.name}</h3><small style="opacity:0.6">${b.dist}</small></div>
+                </div>
+                <div style="margin:10px 0; font-size:0.8em;">
+                    <span style="background:#222; padding:3px 8px; border-radius:4px; margin-right:5px;">${b.proof || '0'} Proof</span>
+                    <span style="color:var(--gold)">★ ${b.score || '0'}/10</span>
+                </div>
+                <p style="font-size:0.8em; color:var(--dim); margin:0;">${b.notes}</p>
+                <button class="btn-danger" onclick="deleteBottle(${b.id})">Delete Bottle</button>
+            </div>
+        `).reverse().join('');
+    };
+}
+
+function deleteBottle(id) {
+    if (confirm("Are you sure you want to remove this bottle from your vault?")) {
+        const tx = db.transaction("bottles", "readwrite");
+        tx.objectStore("bottles").delete(id).onsuccess = () => renderVault();
+    }
+}
+
+// --- FORM LOGIC ---
 function saveBourbon() {
-    if (!db) { alert("Database not ready"); return; }
-    
     const name = document.getElementById("bName").value;
-    if (!name) { alert("Please enter a name"); return; }
-
+    if (!name) return alert("Enter a name");
     const entry = {
         id: Date.now(),
         name: name,
@@ -176,102 +211,36 @@ function saveBourbon() {
         notes: document.getElementById("bNotes").value,
         photo: currentPhoto
     };
-
-    const transaction = db.transaction(["bottles"], "readwrite");
-    const store = transaction.objectStore("bottles");
-    const addRequest = store.add(entry);
-
-    addRequest.onsuccess = () => {
-        showToast();
-        clearForm();
-        renderVault();
-    };
-    
-    addRequest.onerror = (e) => {
-        console.error("Save Error", e);
-        alert("Failed to save. Try refreshing.");
+    db.transaction("bottles", "readwrite").objectStore("bottles").add(entry).onsuccess = () => {
+        showToast(); clearForm(); renderVault();
     };
 }
 
-function renderVault() {
-    if (!db) return;
-    const store = db.transaction("bottles").objectStore("bottles");
-    store.getAll().onsuccess = e => {
-        const bottles = e.target.result;
-        const list = document.getElementById("vaultList");
-        if (!bottles.length) { list.innerHTML = "<p style='text-align:center; opacity:0.5'>Vault is empty</p>"; return; }
-        
-        list.innerHTML = bottles.map(b => `
-            <div class="vault-item">
-                <div class="item-header">
-                    <img src="${b.photo || 'https://cdn-icons-png.flaticon.com/512/931/931920.png'}" class="item-photo-mini">
-                    <div><h3 style="margin:0; color:var(--gold);">${b.name}</h3><small style="opacity:0.6">${b.dist}</small></div>
-                </div>
-                <div style="margin:10px 0; font-size:0.8em;">
-                    <span style="background:#222; padding:3px 8px; border-radius:4px; margin-right:5px;">${b.proof || '0'} Proof</span>
-                    <span style="color:var(--gold)">★ ${b.score || '0'}/10</span>
-                </div>
-                <p style="font-size:0.8em; color:var(--dim); margin:0;">${b.notes}</p>
-                <button onclick="deleteBottle(${b.id})" style="background:none; border:none; color:var(--hot); font-size:0.7em; margin-top:10px; padding:0; text-decoration:underline;">Remove</button>
-            </div>
-        `).reverse().join('');
-    };
+// --- UTILS ---
+function showSuggestions(val) {
+    const box = document.getElementById("suggestions");
+    if (val.length < 2) { box.style.display = "none"; return; }
+    const matches = AI_DATABASE.filter(b => b.name.toLowerCase().includes(val.toLowerCase()));
+    if (matches.length) {
+        box.innerHTML = matches.map((m) => `<div class="suggestion-item" onmousedown="selectLocalBourbon(${AI_DATABASE.indexOf(m)})">${m.name}</div>`).join('');
+        box.style.display = "block";
+    }
 }
-
-function deleteBottle(id) {
-    db.transaction("bottles", "readwrite").objectStore("bottles").delete(id).onsuccess = () => renderVault();
+function hideSuggestions() { setTimeout(() => { document.getElementById("suggestions").style.display = "none"; }, 200); }
+function selectLocalBourbon(idx) {
+    const b = AI_DATABASE[idx];
+    document.getElementById("bName").value = b.name;
+    document.getElementById("bDistillery").value = b.distillery;
+    document.getElementById("bProof").value = b.proof;
 }
-
-// --- UI UTILS ---
-function showToast() {
-    const t = document.getElementById("toast");
-    t.style.display = "block";
-    setTimeout(() => { t.style.display = "none"; }, 2000);
-}
-
-function clearForm() {
-    document.querySelectorAll('input, textarea').forEach(i => i.value = "");
-    currentPhoto = null;
-    document.getElementById('photoPreview').style.display = "none";
-    document.getElementById('photoPlaceholder').style.display = "flex";
-}
-
-function openTab(id, btn) {
-    document.querySelectorAll('.content').forEach(c => c.classList.remove('active'));
-    document.querySelectorAll('.t-btn').forEach(b => b.classList.remove('active'));
-    document.getElementById(id).classList.add('active');
-    btn.classList.add('active');
-}
-
+function showToast() { document.getElementById("toast").style.display = "block"; setTimeout(() => { document.getElementById("toast").style.display = "none"; }, 2000); }
+function clearForm() { document.querySelectorAll('input, textarea').forEach(i => i.value = ""); document.getElementById('photoPreview').style.display = "none"; document.getElementById('photoPlaceholder').style.display = "block"; currentPhoto = null; }
+function openTab(id, btn) { document.querySelectorAll('.content').forEach(c => c.classList.remove('active')); document.querySelectorAll('.t-btn').forEach(b => b.classList.remove('active')); document.getElementById(id).classList.add('active'); btn.classList.add('active'); }
 let currentPhoto = null;
 function handlePhoto(input) {
     const reader = new FileReader();
-    reader.onload = e => { 
-        currentPhoto = e.target.result; 
-        document.getElementById('photoPreview').src = currentPhoto;
-        document.getElementById('photoPreview').style.display = "block";
-        document.getElementById('photoPlaceholder').style.display = "none";
-    };
+    reader.onload = e => { currentPhoto = e.target.result; document.getElementById('photoPreview').src = currentPhoto; document.getElementById('photoPreview').style.display = "block"; document.getElementById('photoPlaceholder').style.display = "none"; };
     reader.readAsDataURL(input.files[0]);
-}
-
-let isScanning = false;
-function toggleScanner() {
-    const cont = document.getElementById('scanner-container');
-    if (isScanning) { Quagga.stop(); cont.style.display = 'none'; isScanning = false; }
-    else { cont.style.display = 'block'; isScanning = true; startScanner(); }
-}
-function startScanner() {
-    Quagga.init({ inputStream: { type: "LiveStream", target: document.querySelector('#scanner-container'), constraints: { facingMode: "environment" } }, decoder: { readers: ["upc_reader"] } }, (err) => { if (!err) Quagga.start(); });
-    Quagga.onDetected(async (data) => {
-        Quagga.stop(); toggleScanner();
-        const res = await fetch(`https://world.openfoodfacts.org/api/v0/product/${data.codeResult.code}.json`);
-        const json = await res.json();
-        if (json.status === 1) {
-            document.getElementById('bName').value = json.product.product_name || "";
-            document.getElementById('bDistillery').value = json.product.brands || "";
-        }
-    });
 }
 </script>
 </body>
