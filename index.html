@@ -1,189 +1,205 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Bourbon Vault</title>
-
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bourbon Vault Pro</title>
 <style>
-
 body{
-font-family:-apple-system;
-background:#0f0f0f;
-color:white;
-margin:0;
-padding:20px;
+    font-family:-apple-system, sans-serif;
+    background:#0f0f0f;
+    color:white;
+    padding:15px;
 }
-
 h1{
-text-align:center;
-color:#e0a34a;
+    text-align:center;
+    color:#d4a24c;
+    margin-bottom:20px;
 }
-
 .card{
-background:#1c1c1c;
-padding:15px;
-border-radius:14px;
-margin-bottom:15px;
+    background:#1c1c1c;
+    padding:15px;
+    border-radius:14px;
+    margin-bottom:20px;
 }
-
-input,textarea{
-width:100%;
-padding:10px;
-margin-top:6px;
-margin-bottom:10px;
-border-radius:8px;
-border:none;
-background:#2c2c2c;
-color:white;
+input,textarea,select{
+    width:100%;
+    padding:10px;
+    margin-top:6px;
+    margin-bottom:10px;
+    border-radius:8px;
+    border:none;
+    background:#2c2c2c;
+    color:white;
 }
-
+input[type=range]{
+    width:100%;
+}
 button{
-width:100%;
-padding:12px;
-border-radius:10px;
-border:none;
-background:#e0a34a;
-color:black;
-font-weight:bold;
-margin-top:8px;
+    width:100%;
+    padding:12px;
+    border-radius:10px;
+    border:none;
+    background:#d4a24c;
+    color:black;
+    font-weight:bold;
+    margin-top:8px;
 }
-
-.leaderboard{
-margin-top:25px;
-}
-
 .bourbon{
-background:#1a1a1a;
-padding:12px;
-border-radius:10px;
-margin-bottom:10px;
+    background:#1a1a1a;
+    padding:12px;
+    border-radius:12px;
+    margin-bottom:12px;
 }
-
 .rank{
-font-size:20px;
-font-weight:bold;
-color:#e0a34a;
+    font-size:18px;
+    font-weight:bold;
+    color:#d4a24c;
 }
-
 .score{
-font-size:18px;
+    font-size:16px;
+    margin-bottom:6px;
 }
-
-.delete{
-background:#444;
-margin-top:8px;
+.img-preview{
+    width:100%;
+    max-height:200px;
+    object-fit:contain;
+    margin-bottom:8px;
+    border-radius:8px;
 }
-
 .search{
-margin-bottom:15px;
+    margin-bottom:15px;
+    padding:8px;
+    border-radius:8px;
+    border:none;
+    background:#2c2c2c;
+    color:white;
 }
-
 </style>
 </head>
-
 <body>
 
-<h1>🥃 Bourbon Vault</h1>
+<h1>🥃 Bourbon Vault Pro</h1>
 
 <div class="card">
-
 <input id="name" placeholder="Bourbon Name">
 <input id="distillery" placeholder="Distillery">
-<input id="score" type="number" placeholder="Overall Score (1-10)">
+<input id="score" type="number" placeholder="Overall Score 1-10" min="1" max="10">
 
-<input id="sweet" type="number" placeholder="Sweetness (1-5)">
-<input id="oak" type="number" placeholder="Oak (1-5)">
-<input id="spice" type="number" placeholder="Spice (1-5)">
-<input id="heat" type="number" placeholder="Proof Heat (1-5)">
-<input id="complexity" type="number" placeholder="Complexity (1-5)">
+<label>Sweet <span id="sweetVal">3</span></label>
+<input type="range" id="sweet" min="1" max="5" value="3" oninput="sweetVal.innerText=this.value">
+
+<label>Oak <span id="oakVal">3</span></label>
+<input type="range" id="oak" min="1" max="5" value="3" oninput="oakVal.innerText=this.value">
+
+<label>Spice <span id="spiceVal">3</span></label>
+<input type="range" id="spice" min="1" max="5" value="3" oninput="spiceVal.innerText=this.value">
+
+<label>Heat <span id="heatVal">3</span></label>
+<input type="range" id="heat" min="1" max="5" value="3" oninput="heatVal.innerText=this.value">
+
+<label>Complexity <span id="complexityVal">3</span></label>
+<input type="range" id="complexity" min="1" max="5" value="3" oninput="complexityVal.innerText=this.value">
+
+<input type="file" id="image" accept="image/*">
 
 <textarea id="notes" placeholder="Tasting Notes"></textarea>
 
 <button onclick="addBourbon()">Add Bourbon</button>
-
 </div>
 
 <input class="search" id="search" placeholder="Search bourbons..." oninput="render()">
 
-<div class="leaderboard">
 <h2>🏆 Rankings</h2>
 <div id="list"></div>
-</div>
 
 <script>
-
-let bourbons = JSON.parse(localStorage.getItem("bourbonVault") || "[]")
+let bourbons = JSON.parse(localStorage.getItem("bourbons") || "[]")
 
 function save(){
-localStorage.setItem("bourbonVault", JSON.stringify(bourbons))
+    localStorage.setItem("bourbons", JSON.stringify(bourbons))
 }
 
 function addBourbon(){
-
-let b={
-name:name.value,
-distillery:distillery.value,
-score:Number(score.value),
-sweet:sweet.value,
-oak:oak.value,
-spice:spice.value,
-heat:heat.value,
-complexity:complexity.value,
-notes:notes.value
-}
-
-bourbons.push(b)
-
-bourbons.sort((a,b)=>b.score-a.score)
-
-save()
-render()
-
-document.querySelectorAll("input,textarea").forEach(el=>el.value="")
+    const file = image.files[0]
+    if(file){
+        const reader = new FileReader()
+        reader.onload = function(e){
+            const b = {
+                name:name.value,
+                distillery:distillery.value,
+                score:Number(score.value),
+                sweet:Number(sweet.value),
+                oak:Number(oak.value),
+                spice:Number(spice.value),
+                heat:Number(heat.value),
+                complexity:Number(complexity.value),
+                notes:notes.value,
+                img:e.target.result
+            }
+            bourbons.push(b)
+            bourbons.sort((a,b)=>b.score-a.score)
+            save()
+            render()
+            document.querySelectorAll("input,textarea").forEach(el=>{
+                if(el.type!=="file") el.value=""
+            })
+            image.value=""
+            sweet.value=oak.value=spice.value=heat.value=complexity.value=3
+            sweetVal.innerText=oakVal.innerText=spiceVal.innerText=heatVal.innerText=complexityVal.innerText=3
+        }
+        reader.readAsDataURL(file)
+    }else{
+        const b = {
+            name:name.value,
+            distillery:distillery.value,
+            score:Number(score.value),
+            sweet:Number(sweet.value),
+            oak:Number(oak.value),
+            spice:Number(spice.value),
+            heat:Number(heat.value),
+            complexity:Number(complexity.value),
+            notes:notes.value,
+            img:null
+        }
+        bourbons.push(b)
+        bourbons.sort((a,b)=>b.score-a.score)
+        save()
+        render()
+        document.querySelectorAll("input,textarea").forEach(el=>{
+            if(el.type!=="file") el.value=""
+        })
+        sweet.value=oak.value=spice.value=heat.value=complexity.value=3
+        sweetVal.innerText=oakVal.innerText=spiceVal.innerText=heatVal.innerText=complexityVal.innerText=3
+    }
 }
 
 function deleteBourbon(i){
-bourbons.splice(i,1)
-save()
-render()
+    if(confirm("Delete this bourbon?")){
+        bourbons.splice(i,1)
+        save()
+        render()
+    }
 }
 
 function render(){
-
-let search=document.getElementById("search").value.toLowerCase()
-
-let html=""
-
-bourbons
-.filter(b=>b.name.toLowerCase().includes(search))
-.forEach((b,i)=>{
-
-html+=`
-<div class="bourbon">
-
-<div class="rank">#${i+1} ${b.name}</div>
-<div>${b.distillery}</div>
-
-<div class="score">⭐ ${b.score}/10</div>
-
-<div>
-Sweet: ${b.sweet} | Oak: ${b.oak} | Spice: ${b.spice} | Heat: ${b.heat} | Complexity: ${b.complexity}
-</div>
-
-<div>${b.notes}</div>
-
-<button class="delete" onclick="deleteBourbon(${i})">Delete</button>
-
-</div>
-`
-})
-
-list.innerHTML=html
-
+    const searchTerm = search.value.toLowerCase()
+    let html=""
+    bourbons.filter(b=>b.name.toLowerCase().includes(searchTerm)).forEach((b,i)=>{
+        html+=`<div class="bourbon">
+        <div class="rank">#${i+1} ${b.name}</div>
+        <div>${b.distillery}</div>
+        <div class="score">⭐ ${b.score}/10</div>
+        <div>Sweet:${b.sweet} Oak:${b.oak} Spice:${b.spice} Heat:${b.heat} Complexity:${b.complexity}</div>
+        ${b.img?`<img src="${b.img}" class="img-preview">`:''}
+        <div>${b.notes}</div>
+        <button onclick="deleteBourbon(${i})">Delete</button>
+        </div>`
+    })
+    list.innerHTML=html
 }
 
 render()
-
 </script>
 
 </body>
