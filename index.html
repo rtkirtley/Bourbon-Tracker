@@ -3,185 +3,98 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Bourbon Vault Pro</title>
+<title>Bourbon Vault Ultra</title>
 <style>
-body{
-    font-family:-apple-system, sans-serif;
-    background:#0f0f0f;
-    color:white;
-    padding:15px;
-}
-h1{
-    text-align:center;
-    color:#d4a24c;
-    margin-bottom:20px;
-}
-.card{
-    background:#1c1c1c;
-    padding:15px;
-    border-radius:14px;
-    margin-bottom:20px;
-}
-input,textarea,select{
-    width:100%;
-    padding:10px;
-    margin-top:6px;
-    margin-bottom:10px;
-    border-radius:8px;
-    border:none;
-    background:#2c2c2c;
-    color:white;
-}
-input[type=range]{
-    width:100%;
-}
-button{
-    width:100%;
-    padding:12px;
-    border-radius:10px;
-    border:none;
-    background:#d4a24c;
-    color:black;
-    font-weight:bold;
-    margin-top:8px;
-}
-.bourbon{
-    background:#1a1a1a;
-    padding:12px;
-    border-radius:12px;
-    margin-bottom:12px;
-}
-.rank{
-    font-size:18px;
-    font-weight:bold;
-    color:#d4a24c;
-}
-.score{
-    font-size:16px;
-    margin-bottom:6px;
-}
-.img-preview{
-    width:100%;
-    max-height:200px;
-    object-fit:contain;
-    margin-bottom:8px;
-    border-radius:8px;
-}
-.search{
-    margin-bottom:15px;
-    padding:8px;
-    border-radius:8px;
-    border:none;
-    background:#2c2c2c;
-    color:white;
-}
+body{font-family:-apple-system,sans-serif;background:#0f0f0f;color:white;padding:15px}
+h1{text-align:center;color:#d4a24c;margin-bottom:20px}
+.card{background:#1c1c1c;padding:15px;border-radius:14px;margin-bottom:20px}
+input,textarea,select{width:100%;padding:10px;margin-top:6px;margin-bottom:10px;border-radius:8px;border:none;background:#2c2c2c;color:white}
+input[type=range]{width:100%}
+button{width:100%;padding:12px;border-radius:10px;border:none;background:#d4a24c;color:black;font-weight:bold;margin-top:8px}
+.bourbon{background:#1a1a1a;padding:12px;border-radius:12px;margin-bottom:12px}
+.rank{font-size:18px;font-weight:bold;color:#d4a24c}
+.score{font-size:16px;margin-bottom:6px}
+.img-preview{width:100%;max-height:200px;object-fit:contain;margin-bottom:8px;border-radius:8px}
+.search{margin-bottom:15px;padding:8px;border-radius:8px;border:none;background:#2c2c2c;color:white}
+.autocomplete-suggestions{background:#2c2c2c;border-radius:8px;margin-top:-5px;max-height:150px;overflow-y:auto}
+.suggestion{padding:10px;border-bottom:1px solid #444;cursor:pointer}
+.suggestion:hover{background:#3a3a3a}
 </style>
 </head>
 <body>
 
-<h1>🥃 Bourbon Vault Pro</h1>
+<h1>🥃 Bourbon Vault Ultra</h1>
 
 <div class="card">
+<input id="webSearch" class="search" placeholder="Search for a bourbon...">
+<div id="suggestions" class="autocomplete-suggestions"></div>
+
 <input id="name" placeholder="Bourbon Name">
 <input id="distillery" placeholder="Distillery">
 <input id="score" type="number" placeholder="Overall Score 1-10" min="1" max="10">
 
 <label>Sweet <span id="sweetVal">3</span></label>
 <input type="range" id="sweet" min="1" max="5" value="3" oninput="sweetVal.innerText=this.value">
-
 <label>Oak <span id="oakVal">3</span></label>
 <input type="range" id="oak" min="1" max="5" value="3" oninput="oakVal.innerText=this.value">
-
 <label>Spice <span id="spiceVal">3</span></label>
 <input type="range" id="spice" min="1" max="5" value="3" oninput="spiceVal.innerText=this.value">
-
 <label>Heat <span id="heatVal">3</span></label>
 <input type="range" id="heat" min="1" max="5" value="3" oninput="heatVal.innerText=this.value">
-
 <label>Complexity <span id="complexityVal">3</span></label>
 <input type="range" id="complexity" min="1" max="5" value="3" oninput="complexityVal.innerText=this.value">
 
 <input type="file" id="image" accept="image/*">
 
 <textarea id="notes" placeholder="Tasting Notes"></textarea>
-
 <button onclick="addBourbon()">Add Bourbon</button>
 </div>
 
-<input class="search" id="search" placeholder="Search bourbons..." oninput="render()">
-
+<input class="search" id="search" placeholder="Search your logged bourbons..." oninput="render()">
 <h2>🏆 Rankings</h2>
 <div id="list"></div>
 
 <script>
+// --- Data Store ---
 let bourbons = JSON.parse(localStorage.getItem("bourbons") || "[]")
+function save(){localStorage.setItem("bourbons", JSON.stringify(bourbons))}
 
-function save(){
-    localStorage.setItem("bourbons", JSON.stringify(bourbons))
-}
-
+// --- Add Bourbon ---
 function addBourbon(){
     const file = image.files[0]
     if(file){
         const reader = new FileReader()
-        reader.onload = function(e){
-            const b = {
-                name:name.value,
-                distillery:distillery.value,
-                score:Number(score.value),
-                sweet:Number(sweet.value),
-                oak:Number(oak.value),
-                spice:Number(spice.value),
-                heat:Number(heat.value),
-                complexity:Number(complexity.value),
-                notes:notes.value,
-                img:e.target.result
-            }
-            bourbons.push(b)
-            bourbons.sort((a,b)=>b.score-a.score)
-            save()
-            render()
-            document.querySelectorAll("input,textarea").forEach(el=>{
-                if(el.type!=="file") el.value=""
-            })
-            image.value=""
-            sweet.value=oak.value=spice.value=heat.value=complexity.value=3
-            sweetVal.innerText=oakVal.innerText=spiceVal.innerText=heatVal.innerText=complexityVal.innerText=3
-        }
+        reader.onload = function(e){saveBourbon(e.target.result)}
         reader.readAsDataURL(file)
-    }else{
-        const b = {
-            name:name.value,
-            distillery:distillery.value,
-            score:Number(score.value),
-            sweet:Number(sweet.value),
-            oak:Number(oak.value),
-            spice:Number(spice.value),
-            heat:Number(heat.value),
-            complexity:Number(complexity.value),
-            notes:notes.value,
-            img:null
-        }
-        bourbons.push(b)
-        bourbons.sort((a,b)=>b.score-a.score)
-        save()
-        render()
-        document.querySelectorAll("input,textarea").forEach(el=>{
-            if(el.type!=="file") el.value=""
-        })
-        sweet.value=oak.value=spice.value=heat.value=complexity.value=3
-        sweetVal.innerText=oakVal.innerText=spiceVal.innerText=heatVal.innerText=complexityVal.innerText=3
+    }else saveBourbon(null)
+}
+function saveBourbon(imgData){
+    const b = {
+        name:name.value,
+        distillery:distillery.value,
+        score:Number(score.value),
+        sweet:Number(sweet.value),
+        oak:Number(oak.value),
+        spice:Number(spice.value),
+        heat:Number(heat.value),
+        complexity:Number(complexity.value),
+        notes:notes.value,
+        img:imgData
     }
+    bourbons.push(b)
+    bourbons.sort((a,b)=>b.score-a.score)
+    save()
+    render()
+    document.querySelectorAll("input,textarea").forEach(el=>{if(el.type!=="file") el.value=""})
+    image.value=""
+    sweet.value=oak.value=spice.value=heat.value=complexity.value=3
+    sweetVal.innerText=oakVal.innerText=spiceVal.innerText=heatVal.innerText=complexityVal.innerText=3
 }
 
-function deleteBourbon(i){
-    if(confirm("Delete this bourbon?")){
-        bourbons.splice(i,1)
-        save()
-        render()
-    }
-}
+// --- Delete ---
+function deleteBourbon(i){if(confirm("Delete this bourbon?")){bourbons.splice(i,1);save();render()}}
 
+// --- Render ---
 function render(){
     const searchTerm = search.value.toLowerCase()
     let html=""
@@ -198,9 +111,31 @@ function render(){
     })
     list.innerHTML=html
 }
-
 render()
-</script>
 
+// --- Bourbon Web Search ---
+const suggestionsDiv = document.getElementById("suggestions")
+webSearch.addEventListener("input", async function(){
+    const query = webSearch.value
+    if(query.length<2){suggestionsDiv.innerHTML=""; return}
+    // Use a public API or a Google search fallback
+    const url = `https://www.thewhiskyhunter.net/api/search?query=${encodeURIComponent(query)}` // example
+    try{
+        // Example placeholder: we’ll mock it since no public API keys
+        const results=[
+            {name:"Buffalo Trace",distillery:"Buffalo Trace Distillery"},
+            {name:"Woodford Reserve",distillery:"Brown-Forman"},
+            {name:"Four Roses Single Barrel",distillery:"Four Roses"}
+        ].filter(r=>r.name.toLowerCase().includes(query.toLowerCase()))
+        suggestionsDiv.innerHTML=results.map(r=>`<div class="suggestion" onclick="selectBourbon('${r.name}','${r.distillery}')">${r.name} - ${r.distillery}</div>`).join("")
+    }catch(e){console.error(e)}
+})
+
+function selectBourbon(nameVal,distilleryVal){
+    name.value=nameVal
+    distillery.value=distilleryVal
+    suggestionsDiv.innerHTML=""
+}
+</script>
 </body>
 </html>
