@@ -10,7 +10,6 @@
     <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/931/931920.png">
     
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/quagga/0.12.1/quagga.min.js"></script>
     
     <style>
         :root { --gold: #c3a36b; --gold-dim: #9a7f53; --bg: #000000; --card: #111111; --input: #1a1a1a; --text: #e0e0e0; --dim: #777; --hot: #ff4444; }
@@ -29,25 +28,21 @@
         .card { background: var(--card); border-radius: 16px; padding: 20px; margin-bottom: 15px; border: 1px solid #222; position: relative; }
         input, textarea { width: 100%; padding: 14px; margin: 8px 0; border-radius: 8px; border: 1px solid #333; background: var(--input); color: white; font-size: 16px; box-sizing: border-box; outline: none; }
         
-        .suggestion-box { background: #1a1a1a; border-radius: 8px; max-height: 250px; overflow-y: auto; display: none; border: 1px solid var(--gold); position: absolute; width: calc(100% - 40px); z-index: 1000; box-shadow: 0 10px 30px rgba(0,0,0,1); }
-        .suggestion-item { padding: 14px; border-bottom: 1px solid #333; font-size: 0.9em; color: var(--text); }
+        /* Search Box */
+        .suggestion-box { background: #1a1a1a; border-radius: 8px; max-height: 300px; overflow-y: auto; display: none; border: 1px solid var(--gold); position: absolute; width: calc(100% - 40px); z-index: 1000; box-shadow: 0 10px 30px rgba(0,0,0,1); }
+        .suggestion-item { padding: 14px; border-bottom: 1px solid #333; font-size: 0.9em; color: var(--text); display: flex; justify-content: space-between; align-items: center; }
+        .suggestion-item:active { background: #222; }
+        .source-tag { font-size: 0.6em; text-transform: uppercase; padding: 2px 6px; border-radius: 4px; background: #333; color: var(--gold); }
 
-        .btn { width: 100%; padding: 16px; border-radius: 12px; border: none; font-weight: 800; font-size: 0.9em; text-transform: uppercase; cursor: pointer; margin-top: 10px; }
+        .btn { width: 100%; padding: 16px; border-radius: 12px; border: none; font-weight: 800; font-size: 0.9em; text-transform: uppercase; cursor: pointer; margin-top: 10px; transition: 0.2s; }
         .btn-gold { background: linear-gradient(145deg, var(--gold), var(--gold-dim)); color: black; }
-        .btn-dark { background: #222; color: var(--gold); border: 1px solid #333; }
-        .btn-danger { background: rgba(255, 68, 68, 0.1); color: var(--hot); border: 1px solid var(--hot); font-size: 0.7em; padding: 8px; margin-top: 15px; width: auto; border-radius: 6px; }
-        
-        #scanner-container { width: 100%; height: 200px; background: #000; border-radius: 12px; margin-bottom: 15px; overflow: hidden; display: none; border: 2px solid var(--gold); position: relative; }
-        #scanner-container video { width: 100%; height: 100%; object-fit: cover; }
+        .btn-gold:active { transform: scale(0.98); opacity: 0.9; }
 
-        .vault-item { background: var(--card); padding: 18px; border-radius: 16px; margin-bottom: 15px; border: 1px solid #222; position: relative; }
-        .item-header { display: flex; gap: 12px; align-items: center; }
-        .item-photo-mini { width: 50px; height: 50px; border-radius: 8px; object-fit: cover; background: #222; border: 1px solid #333; }
-        
+        .vault-item { background: var(--card); padding: 18px; border-radius: 16px; margin-bottom: 15px; border: 1px solid #222; }
         .stat-row { display: flex; justify-content: space-between; margin: 10px 0 4px; color: var(--gold); font-size: 0.8em; font-weight: bold; }
         input[type=range] { width: 100%; accent-color: var(--gold); height: 6px; }
         
-        .toast { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); background: var(--gold); color: black; padding: 12px 24px; border-radius: 50px; font-weight: bold; display: none; z-index: 2000; box-shadow: 0 5px 15px rgba(0,0,0,0.5); }
+        .toast { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); background: var(--gold); color: black; padding: 12px 24px; border-radius: 50px; font-weight: bold; display: none; z-index: 2000; }
     </style>
 </head>
 <body>
@@ -62,22 +57,19 @@
 
 <div id="log" class="content active">
     <div class="card">
-        <button class="btn btn-dark" id="scanBtn" onclick="toggleScanner()">🔍 Scan Barcode</button>
-        <div id="scanner-container"></div>
-
         <div style="position:relative;">
-            <input id="bName" placeholder="Search or Type Name..." oninput="showSuggestions(this.value)" onblur="hideSuggestions()">
+            <input id="bName" placeholder="Start typing bourbon name..." oninput="handleSearch(this.value)" onblur="hideSuggestions()">
             <div id="suggestions" class="suggestion-box"></div>
         </div>
 
-        <input id="bDistillery" placeholder="Distillery">
+        <input id="bDistillery" placeholder="Distillery / Producer">
         <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
             <input id="bProof" type="number" step="0.1" placeholder="Proof">
             <input id="bPrice" type="number" placeholder="Price $">
         </div>
 
-        <div onclick="document.getElementById('photoInput').click()" style="height:100px; background:#1a1a1a; border-radius:12px; border:1px dashed #444; display:flex; align-items:center; justify-content:center; color:var(--dim); overflow:hidden; margin:10px 0;">
-            <span id="photoPlaceholder">📷 Add Photo</span>
+        <div onclick="document.getElementById('photoInput').click()" style="height:80px; background:#1a1a1a; border-radius:12px; border:1px dashed #444; display:flex; align-items:center; justify-content:center; color:var(--dim); overflow:hidden; margin:10px 0;">
+            <span id="photoPlaceholder">📷 Add Bottle Photo</span>
             <img id="photoPreview" style="display:none; width:100%; height:100%; object-fit:cover;">
         </div>
         <input type="file" id="photoInput" accept="image/*" capture="camera" onchange="handlePhoto(this)" style="display:none;">
@@ -85,10 +77,10 @@
         <div class="stat-row"><span>Sweetness</span><span id="v1">3</span></div>
         <input type="range" id="s1" min="1" max="5" value="3" oninput="v1.innerText=this.value">
         
-        <div class="stat-row"><span>Oak</span><span id="v2">3</span></div>
+        <div class="stat-row"><span>Oak / Wood</span><span id="v2">3</span></div>
         <input type="range" id="s2" min="1" max="5" value="3" oninput="v2.innerText=this.value">
         
-        <div class="stat-row"><span>Spice</span><span id="v3">3</span></div>
+        <div class="stat-row"><span>Spice / Heat</span><span id="v3">3</span></div>
         <input type="range" id="s3" min="1" max="5" value="3" oninput="v3.innerText=this.value">
 
         <input id="bScore" type="number" placeholder="Rating (1-10)">
@@ -99,105 +91,95 @@
 </div>
 
 <div id="vault" class="content">
-    <input id="vaultSearch" placeholder="Search your vault..." oninput="renderVault(this.value)" style="margin-bottom:15px; border-color:var(--gold);">
+    <input id="vaultSearch" placeholder="Search your collection..." oninput="renderVault(this.value)" style="margin-bottom:15px; border-color:var(--gold);">
     <div id="vaultList"></div>
 </div>
 
 <div id="stats" class="content"><div class="card"><canvas id="palateChart"></canvas></div></div>
-<div id="toast" class="toast">Bottle Saved!</div>
+<div id="toast" class="toast">Saved to Vault!</div>
 
 <script>
-// --- LOCAL DATABASE ---
-const AI_DATABASE = [
-    { name: "Noah's Mill", distillery: "Willett", proof: 114.3, sweet: 3, oak: 4, spice: 5, notes: "Walnut and heavy spice." },
-    { name: "Four Roses Single Barrel", distillery: "Four Roses", proof: 100, sweet: 2, oak: 3, spice: 5, notes: "Floral and high-rye spice." },
-    { name: "Eagle Rare 10", distillery: "Buffalo Trace", proof: 90, sweet: 4, oak: 4, spice: 2, notes: "Orange and leather." }
+// --- EXTENDED LOCAL LIST ---
+const ELITE_DATABASE = [
+    { name: "Blanton's Single Barrel", dist: "Buffalo Trace", proof: 93, sweet: 4, oak: 3, spice: 3, notes: "Citrus, caramel, baking spice." },
+    { name: "Eagle Rare 10", dist: "Buffalo Trace", dist: "Buffalo Trace", proof: 90, sweet: 4, oak: 4, spice: 2, notes: "Honey, toasted oak, orange peel." },
+    { name: "Stagg (Junior)", dist: "Buffalo Trace", proof: 130, sweet: 3, oak: 4, spice: 5, notes: "Chocolate, dark cherry, massive heat." },
+    { name: "Weller Special Reserve", dist: "Buffalo Trace", proof: 90, sweet: 5, oak: 2, spice: 2, notes: "Wheated, honey, soft butterscotch." },
+    { name: "Weller Antique 107", dist: "Buffalo Trace", proof: 107, sweet: 4, oak: 3, spice: 4, notes: "Cinnamon, vanilla, bold spice." },
+    { name: "Old Forester 1920", dist: "Old Forester", proof: 115, sweet: 4, oak: 3, spice: 4, notes: "Dark chocolate, cherry, nuttiness." },
+    { name: "Wild Turkey Rare Breed", dist: "Wild Turkey", proof: 116.8, sweet: 3, oak: 4, spice: 5, notes: "Honey, orange, heavy rye spice." }
 ];
 
 let db;
-const request = indexedDB.open("BourbonVaultDB_v3", 1);
+const request = indexedDB.open("BourbonVaultDB_v4", 1);
 request.onupgradeneeded = e => { e.target.result.createObjectStore("bottles", { keyPath: "id" }); };
 request.onsuccess = e => { db = e.target.result; renderVault(); };
 
-// --- SCANNER FIX ---
-let isScanning = false;
-function toggleScanner() {
-    const cont = document.getElementById('scanner-container');
-    const btn = document.getElementById('scanBtn');
-    if (isScanning) { 
-        Quagga.stop(); 
-        cont.style.display = 'none'; 
-        btn.innerText = '🔍 Scan Barcode'; 
-        isScanning = false; 
-    } else { 
-        cont.style.display = 'block'; 
-        btn.innerText = '🛑 Stop Scanner'; 
-        isScanning = true; 
-        startScanner(); 
-    }
-}
+// --- SEARCH ENGINE ---
+async function handleSearch(query) {
+    const box = document.getElementById("suggestions");
+    if (query.length < 2) { box.style.display = "none"; return; }
 
-function startScanner() {
-    Quagga.init({
-        inputStream: { name: "Live", type: "LiveStream", target: document.querySelector('#scanner-container'), constraints: { facingMode: "environment" } },
-        decoder: { readers: ["upc_reader", "upc_e_reader", "ean_reader"] }
-    }, (err) => { 
-        if (err) { alert("Camera Error: " + err); return; }
-        Quagga.start(); 
-    });
+    // 1. Search Local Elite List
+    const local = ELITE_DATABASE.filter(b => b.name.toLowerCase().includes(query.toLowerCase()));
+    
+    // 2. Search Whisky Hunter API
+    let cloud = [];
+    try {
+        const res = await fetch(`https://whiskyhunter.net/api/search/?search=${query}`);
+        cloud = await res.json();
+    } catch (e) { console.log("Cloud search offline."); }
 
-    Quagga.onDetected(async (data) => {
-        const code = data.codeResult.code;
-        Quagga.stop();
-        toggleScanner();
-        try {
-            const res = await fetch(`https://world.openfoodfacts.org/api/v0/product/${code}.json`);
-            const json = await res.json();
-            if (json.status === 1) {
-                document.getElementById('bName').value = json.product.product_name || "";
-                document.getElementById('bDistillery').value = json.product.brands || "";
-            } else { alert("Product not found in Cloud Database."); }
-        } catch (e) { alert("Network error connecting to Cloud."); }
-    });
-}
-
-// --- VAULT & DELETE LOGIC ---
-function renderVault(filter = "") {
-    if (!db) return;
-    const store = db.transaction("bottles").objectStore("bottles");
-    store.getAll().onsuccess = e => {
-        const bottles = e.target.result;
-        const list = document.getElementById("vaultList");
-        const filtered = bottles.filter(b => b.name.toLowerCase().includes(filter.toLowerCase()));
-        
-        list.innerHTML = filtered.map(b => `
-            <div class="vault-item">
-                <div class="item-header">
-                    <img src="${b.photo || 'https://cdn-icons-png.flaticon.com/512/931/931920.png'}" class="item-photo-mini">
-                    <div><h3 style="margin:0; color:var(--gold);">${b.name}</h3><small style="opacity:0.6">${b.dist}</small></div>
-                </div>
-                <div style="margin:10px 0; font-size:0.8em;">
-                    <span style="background:#222; padding:3px 8px; border-radius:4px; margin-right:5px;">${b.proof || '0'} Proof</span>
-                    <span style="color:var(--gold)">★ ${b.score || '0'}/10</span>
-                </div>
-                <p style="font-size:0.8em; color:var(--dim); margin:0;">${b.notes}</p>
-                <button class="btn-danger" onclick="deleteBottle(${b.id})">Delete Bottle</button>
+    // 3. Render Combined
+    if (local.length || cloud.length) {
+        let html = local.map(m => `
+            <div class="suggestion-item" onmousedown="applyLocal(${ELITE_DATABASE.indexOf(m)})">
+                <span>${m.name}</span> <span class="source-tag">Elite</span>
             </div>
-        `).reverse().join('');
-    };
-}
+        `).join('');
 
-function deleteBottle(id) {
-    if (confirm("Are you sure you want to remove this bottle from your vault?")) {
-        const tx = db.transaction("bottles", "readwrite");
-        tx.objectStore("bottles").delete(id).onsuccess = () => renderVault();
+        html += cloud.slice(0, 10).map(m => `
+            <div class="suggestion-item" onmousedown="applyCloud('${m.name.replace(/'/g, "\\'")}', '${m.distillery.replace(/'/g, "\\'")}')">
+                <span>${m.name}</span> <span class="source-tag">Cloud</span>
+            </div>
+        `).join('');
+
+        box.innerHTML = html;
+        box.style.display = "block";
     }
 }
 
-// --- FORM LOGIC ---
+function applyLocal(idx) {
+    const b = ELITE_DATABASE[idx];
+    document.getElementById('bName').value = b.name;
+    document.getElementById('bDistillery').value = b.dist;
+    document.getElementById('bProof').value = b.proof;
+    document.getElementById('s1').value = b.sweet; v1.innerText = b.sweet;
+    document.getElementById('s2').value = b.oak; v2.innerText = b.oak;
+    document.getElementById('s3').value = b.spice; v3.innerText = b.spice;
+    document.getElementById('bNotes').value = b.notes;
+}
+
+function applyCloud(name, dist) {
+    document.getElementById('bName').value = name;
+    document.getElementById('bDistillery').value = dist;
+    // Smart Guessing Logic
+    let s=3, o=3, sp=3;
+    if (name.toLowerCase().includes("proof") || name.toLowerCase().includes("barrel")) sp = 5;
+    if (name.toLowerCase().includes("wheat") || name.toLowerCase().includes("weller")) s = 5;
+    if (name.toLowerCase().includes("bond") || name.toLowerCase().includes("reserve")) o = 4;
+    
+    document.getElementById('s1').value = s; v1.innerText = s;
+    document.getElementById('s2').value = o; v2.innerText = o;
+    document.getElementById('s3').value = sp; v3.innerText = sp;
+}
+
+function hideSuggestions() { setTimeout(() => { document.getElementById("suggestions").style.display = "none"; }, 250); }
+
+// --- DATABASE ACTIONS ---
 function saveBourbon() {
     const name = document.getElementById("bName").value;
-    if (!name) return alert("Enter a name");
+    if (!name) return;
     const entry = {
         id: Date.now(),
         name: name,
@@ -216,32 +198,39 @@ function saveBourbon() {
     };
 }
 
-// --- UTILS ---
-function showSuggestions(val) {
-    const box = document.getElementById("suggestions");
-    if (val.length < 2) { box.style.display = "none"; return; }
-    const matches = AI_DATABASE.filter(b => b.name.toLowerCase().includes(val.toLowerCase()));
-    if (matches.length) {
-        box.innerHTML = matches.map((m) => `<div class="suggestion-item" onmousedown="selectLocalBourbon(${AI_DATABASE.indexOf(m)})">${m.name}</div>`).join('');
-        box.style.display = "block";
-    }
+function renderVault(filter = "") {
+    if (!db) return;
+    const store = db.transaction("bottles").objectStore("bottles");
+    store.getAll().onsuccess = e => {
+        const bottles = e.target.result;
+        const list = document.getElementById("vaultList");
+        const filtered = bottles.filter(b => b.name.toLowerCase().includes(filter.toLowerCase()));
+        
+        list.innerHTML = filtered.map(b => `
+            <div class="vault-item">
+                <div style="display:flex; gap:12px; align-items:center;">
+                    <img src="${b.photo || 'https://cdn-icons-png.flaticon.com/512/931/931920.png'}" style="width:50px; height:50px; border-radius:8px; object-fit:cover;">
+                    <div><h3 style="margin:0; color:var(--gold);">${b.name}</h3><small style="opacity:0.6">${b.dist}</small></div>
+                </div>
+                <div style="margin:10px 0; font-size:0.8em;"><span style="color:var(--gold)">Score: ${b.score}/10</span> | <span>${b.proof} Proof</span></div>
+                <button onclick="deleteBottle(${b.id})" style="background:none; border:none; color:var(--hot); font-size:0.7em; text-decoration:underline; padding:0;">Delete</button>
+            </div>
+        `).reverse().join('');
+    };
 }
-function hideSuggestions() { setTimeout(() => { document.getElementById("suggestions").style.display = "none"; }, 200); }
-function selectLocalBourbon(idx) {
-    const b = AI_DATABASE[idx];
-    document.getElementById("bName").value = b.name;
-    document.getElementById("bDistillery").value = b.distillery;
-    document.getElementById("bProof").value = b.proof;
-}
-function showToast() { document.getElementById("toast").style.display = "block"; setTimeout(() => { document.getElementById("toast").style.display = "none"; }, 2000); }
-function clearForm() { document.querySelectorAll('input, textarea').forEach(i => i.value = ""); document.getElementById('photoPreview').style.display = "none"; document.getElementById('photoPlaceholder').style.display = "block"; currentPhoto = null; }
-function openTab(id, btn) { document.querySelectorAll('.content').forEach(c => c.classList.remove('active')); document.querySelectorAll('.t-btn').forEach(b => b.classList.remove('active')); document.getElementById(id).classList.add('active'); btn.classList.add('active'); }
+
+function deleteBottle(id) { if (confirm("Remove bottle?")) db.transaction("bottles", "readwrite").objectStore("bottles").delete(id).onsuccess = () => renderVault(); }
+
+// --- UI UTILS ---
 let currentPhoto = null;
 function handlePhoto(input) {
     const reader = new FileReader();
     reader.onload = e => { currentPhoto = e.target.result; document.getElementById('photoPreview').src = currentPhoto; document.getElementById('photoPreview').style.display = "block"; document.getElementById('photoPlaceholder').style.display = "none"; };
     reader.readAsDataURL(input.files[0]);
 }
+function showToast() { document.getElementById("toast").style.display = "block"; setTimeout(() => { document.getElementById("toast").style.display = "none"; }, 2000); }
+function clearForm() { document.querySelectorAll('input, textarea').forEach(i => i.value = ""); document.getElementById('photoPreview').style.display = "none"; document.getElementById('photoPlaceholder').style.display = "flex"; currentPhoto = null; }
+function openTab(id, btn) { document.querySelectorAll('.content').forEach(c => c.classList.remove('active')); document.querySelectorAll('.t-btn').forEach(b => b.classList.remove('active')); document.getElementById(id).classList.add('active'); btn.classList.add('active'); }
 </script>
 </body>
 </html>
